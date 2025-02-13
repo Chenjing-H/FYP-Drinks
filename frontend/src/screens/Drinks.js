@@ -4,6 +4,7 @@ import axios from "axios";
 function DrinkRecipes() {
   const [recipes, setRecipes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [ingredientSearch, setIngredientSearch] = useState("");
   const [filteredRecipes, setFilteredRecipes] = useState([]);
 
   useEffect(() => {
@@ -22,12 +23,23 @@ function DrinkRecipes() {
   }, []);
 
   // Handle search
-  useEffect(() => {
-    const filtered = recipes.filter((recipe) =>
-      recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) 
-    );
-    setFilteredRecipes(filtered);
-  }, [searchTerm, recipes]);
+  const handleSearch = async () => {
+    try {
+      const params = {};
+      if (searchTerm) params.name = searchTerm;
+      if (ingredientSearch) params.ingredients = ingredientSearch;
+
+      const queryString = new URLSearchParams(params).toString();
+      const response = await axios.get(`http://localhost:5173/drink-recipes?${queryString}`);
+
+      setFilteredRecipes(response.data);
+    } catch (error) {
+      console.error("Error searching recipes:", error);
+      setFilteredRecipes([]);
+    }
+  }
+
+
 
   return (
     <div style={styles.container}>
@@ -37,11 +49,19 @@ function DrinkRecipes() {
       <div style={styles.searchContainer}>
         <input
           type="text"
-          placeholder="Search recipes"
+          placeholder="Search by name"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           style={styles.searchInput}
         />
+        <input 
+        type="text"
+        placeholder="Search by ingredients"
+        value={ingredientSearch}
+        onChange={(e) => setIngredientSearch(e.target.value)}
+        style={styles.searchInput}
+        />
+        <button onClick={handleSearch} style={styles.searchButton}>Search</button>
         <button style={styles.filterButton}>
           Filter
         </button>
@@ -93,6 +113,16 @@ const styles = {
     fontSize: "1rem",
     borderRadius: "5px",
     border: "1px solid #ccc",
+  },
+  searchButton: {
+    marginLeft: "10px",
+    padding: "10px 15px",
+    fontSize: "1rem",
+    backgroundColor: "#007bff",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
   },
   filterButton: {
     marginLeft: "10px",

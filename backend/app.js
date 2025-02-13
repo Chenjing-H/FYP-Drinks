@@ -114,7 +114,26 @@ app.get("/users", async (req, res) => {
 // Display Drink Recipes
 app.get("/drink-recipes", async (req, res) => {
     try {
-        const recipes = await AllDrinkRecipes.find();
+        // search functions for recipe
+        const { name, ingredients } = req.query;
+        let query = {};
+
+        // search by names
+        if (name) {
+            query.name = { $regex: name, $options: "i" };
+        }
+
+        // search by ingredients
+        if (ingredients) {
+            const ingredientList = ingredients.split(",").map(ing => ing.trim().toLowerCase()); // Convert to lowercase
+
+            query["ingredients.ingredient"] = { 
+                $all: ingredientList.map(ing => new RegExp(ing, "i")) // Case-insensitive match
+            };
+        }
+
+        
+        const recipes = await AllDrinkRecipes.find(query);
 
         if (recipes.length === 0) {
             return res.status(404).json({ message: "No drink recipes found" });
