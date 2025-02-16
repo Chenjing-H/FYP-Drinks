@@ -7,14 +7,11 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// MongoDB connection URLs (Replace with your actual credentials)
+// MongoDB connection 
 const MONGO_DRINK_RECIPE_URL = "mongodb+srv://chenjingh:mahe12121126@cluster0.omdib.mongodb.net/DrinkRecipe";
 const MONGO_USER_DETAILS_URL = "mongodb+srv://chenjingh:mahe12121126@cluster0.omdib.mongodb.net/UserDetails";
 
-// Connect to DrinkRecipe Database
 const drinkRecipeDB = mongoose.createConnection(MONGO_DRINK_RECIPE_URL);
-
-// Connect to UserDetails Database
 const userDetailsDB = mongoose.createConnection(MONGO_USER_DETAILS_URL);
 
 // Check database connections
@@ -48,7 +45,7 @@ const DrinkRecipeSchema = new mongoose.Schema({
 }, { timestamps: true });
 const AllDrinkRecipes = drinkRecipeDB.model("AllDrink", DrinkRecipeSchema, "AllDrink");
 
-
+// Check server
 app.get("/", (req, res) => {
     res.status(200).json({ status: "ok", message: "Server is running fine!" });
 });
@@ -65,6 +62,7 @@ app.post("/signup", async (req, res) => {
     }
     
     try {
+        // save user to database with password being encrypted
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({ name, email, password: hashedPassword });
         await user.save();
@@ -80,6 +78,7 @@ app.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        // check if the input detail matches with the user database
         const user = await User.findOne({ email });
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(400).json({ message: "Invalid credentials" });
@@ -100,10 +99,12 @@ app.get("/users", async (req, res) => {
     try {
         const users = await User.find({}, { password: 0 }); // Exclude passwords for security
 
+        // if no users found
         if (users.length === 0) {
             return res.status(404).json({ message: "No users found" });
         }
 
+        // return users
         res.json(users);
     } catch (error) {
         console.error("Error fetching users:", error);
@@ -118,31 +119,48 @@ app.get("/drink-recipes", async (req, res) => {
         const { name, ingredients } = req.query;
         let query = {};
 
-        // search by names
+        // search by name
         if (name) {
-            query.name = { $regex: name, $options: "i" };
+            query.name = { $regex: name, $options: "i" }; // case-insensitive match
         }
 
         // search by ingredients
         if (ingredients) {
-            const ingredientList = ingredients.split(",").map(ing => ing.trim().toLowerCase()); // Convert to lowercase
+            const ingredientList = ingredients.split(",").map(ing => ing.trim().toLowerCase()); // convert to lowercase
 
+            // recipes contains all the inputted ingredients
             query["ingredients.ingredient"] = { 
-                $all: ingredientList.map(ing => new RegExp(ing, "i")) // Case-insensitive match
+                $all: ingredientList.map(ing => new RegExp(ing, "i")) // case-insensitive match
             };
         }
 
-        
+        // find all matched recipes
         const recipes = await AllDrinkRecipes.find(query);
 
+        // if no recipes matches
         if (recipes.length === 0) {
             return res.status(404).json({ message: "No drink recipes found" });
         }
 
+        // display all matches recipes
         res.json(recipes);
     } catch (error) {
         console.error("Error fetching drink recipes:", error);
         res.status(500).json({ message: "Error fetching drink recipes", error });
+    }
+});
+
+// Display Chosen recipe detail
+app.get("/drink-recipes/:id", async (req, res) => {
+    try {
+        const recipe = await AllDrinkRecipes.findById(req.params.id);
+        if (!recipe) {
+            return res.status(404).json({ message: "Drink not found" });
+        }
+        res.json(recipe);
+    } catch (error) {
+        console.error("Error fetching drink details:", error);
+        res.status(500).json({ message: "Error fetching drink details", error });
     }
 });
 

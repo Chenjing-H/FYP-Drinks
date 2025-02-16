@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 
 function Signup() {
+  // hooks to manage input fields, error handling and allow for navigation
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -10,16 +11,19 @@ function Signup() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // handle login submission
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
 
+    // check if all fields are filled
     if (!name || !email || !password) {
       setError('Please fill in all fields.');
       return;
     }
 
     try {
+      // sending signup request to backend API and redirect to login page
       await axios.post('http://localhost:5173/signup', { name, email, password });
       navigate('/login');
     } catch (err) {
@@ -31,7 +35,10 @@ function Signup() {
     <div style={styles.outerContainer}>
       <div style={styles.container}>
         <h2 style={styles.title}>Signup</h2>
+        {/* display error message if there is one */}
         {error && <p style={styles.error}>{error}</p>}
+
+        {/* signup form */}
         <form onSubmit={handleSignup} style={styles.form}>
           <div style={styles.inputGroup}>
             <label>Name:</label>
@@ -66,6 +73,7 @@ function Signup() {
               style={styles.input}
             />
           </div>
+          {/* toggle to show/hide password */}
           <div style={styles.checkboxContainer}>
             <input
               type="checkbox"
@@ -76,6 +84,7 @@ function Signup() {
           </div>
           <button type="submit" style={styles.button}>Signup</button>
         </form>
+        {/* redirect to login page if user already has an account */}
         <div style={styles.loginContainer}>
           <Link to="/login" style={styles.loginLink}>Already have an account? Login here</Link>
         </div>

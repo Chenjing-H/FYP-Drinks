@@ -4,6 +4,7 @@ import Login from './screens/Login';
 import Signup from './screens/Signup';
 import Profile from './screens/Profile';
 import Drinks from './screens/Drinks';
+import DrinkDetail from './screens/DrinkDetail';
 
 function App() {
   return (
@@ -14,12 +15,14 @@ function App() {
           <Link to="/signup" style={{ marginRight: '10px' }}>Signup</Link>
           <Link to="/profile" style={{ marginRight: '10px' }}>Profile</Link>
           <Link to="/drinks" style={{ marginRight: '10px' }}>Drinks</Link>
+          
         </nav>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/drinks" element={<Drinks />} />
+          <Route path="/drink/:id" element={<DrinkDetail />} />
           <Route path="*" element={<Drinks />} />
         </Routes>
       </div>

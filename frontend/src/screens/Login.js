@@ -2,28 +2,35 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 
+
 function Login() {
+  // hooks used to manage input fields, error handling and allow for navigation
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // handle login submission
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
 
+    // check if all fields are filled
     if (!email || !password) {
       setError('Please fill in all fields.');
       return;
     }
     try {
+      // sending login request to backend API
       const response = await axios.post('http://localhost:5173/login', { email:email, password });
       console.log("Login Response:", response.data,response.data.user);
       
+      // if user data received, store in local storage 
       if (response.data && response.data.user) {
         localStorage.setItem('user', JSON.stringify(response.data.user));
         console.log(response.data)
+        // navigate to profile page
         navigate('/profile');
       }
       else {
@@ -38,7 +45,10 @@ function Login() {
     <div style={styles.outerContainer}>
       <div style={styles.container}>
       <h2 style={styles.title}>Login</h2>
+      {/* display error message if there is one */}
       {error && <p style={styles.error}>{error}</p>}
+
+      {/* login form */}
       <form onSubmit={handleLogin} style={styles.form}>
         <div style={styles.inputGroup}>
           <label>Email:</label>
@@ -61,6 +71,7 @@ function Login() {
             style={styles.input}
           />
         </div>
+        {/* toggle to show/hide password */}
         <div style={styles.checkboxContainer}>
             <input
               type="checkbox"
@@ -71,6 +82,7 @@ function Login() {
           </div>
         <button type="submit" style={styles.button}>Login</button>
       </form>
+      {/* redirect to signup page if user has no account */}
       <div style={styles.signupContainer}>
           <Link to="/signup" style={styles.signupLink}>Don't have an account? Sign up here</Link>
         </div>

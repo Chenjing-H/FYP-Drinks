@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 
 function DrinkRecipes() {
+  // hooks to store drink recipes and search filters
   const [recipes, setRecipes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [ingredientSearch, setIngredientSearch] = useState("");
   const [filteredRecipes, setFilteredRecipes] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch drink recipes database
+    // Fetch drink recipes database from the backend
     const fetchRecipes = async () => {
       try {
         const response = await axios.get("http://localhost:5173/drink-recipes");
+        // initialize recipes and filtered recipes to all
         setRecipes(response.data);
         setFilteredRecipes(response.data);
       } catch (error) {
@@ -22,13 +26,14 @@ function DrinkRecipes() {
     fetchRecipes();
   }, []);
 
-  // Handle search
+  // Handle search for drink recipes
   const handleSearch = async () => {
     try {
       const params = {};
       if (searchTerm) params.name = searchTerm;
       if (ingredientSearch) params.ingredients = ingredientSearch;
 
+      // construct query string from params
       const queryString = new URLSearchParams(params).toString();
       const response = await axios.get(`http://localhost:5173/drink-recipes?${queryString}`);
 
@@ -62,24 +67,29 @@ function DrinkRecipes() {
         style={styles.searchInput}
         />
         <button onClick={handleSearch} style={styles.searchButton}>Search</button>
-        <button style={styles.filterButton}>
-          Filter
-        </button>
+        
       </div>
 
       {/* Display Recipes */}
       <div style={styles.recipeList}>
         {filteredRecipes.length > 0 ? (
           filteredRecipes.map((recipe) => (
-            <div key={recipe._id} style={styles.recipeCard}>
+            <div 
+            key={recipe._id} 
+            style={styles.recipeCard} 
+            onClick={() => navigate(`/drink/${recipe._id}`)}
+            >
               <img src={recipe.imageUrl || "https://via.placeholder.com/150"} alt={recipe.name} style={styles.image} />
               <h3 style={styles.recipeName}>{recipe.name}</h3>
               <p style={styles.recipeDetails}>
                 <strong>Average Rating:</strong> ⭐{recipe.avgRate.toFixed(1)}
               </p>
               <p style={styles.recipeDetails}>
-                <strong>Ingredients:</strong>{" "}
-                {recipe.ingredients.map((ing) => `${ing.ingredient} (${ing.measure})`).join(", ")}
+                <strong>Ingredients:</strong><br/>
+                {" "}
+                {recipe.ingredients
+                .filter(ing => ing.ingredient)
+                .map((ing) => `${ing.measure} ${ing.ingredient}`).join(", ")}
               </p>
             </div>
           ))
@@ -110,12 +120,12 @@ const styles = {
   searchInput: {
     width: "70%",
     padding: "10px",
+    marginRight:"10px",
     fontSize: "1rem",
     borderRadius: "5px",
     border: "1px solid #ccc",
   },
   searchButton: {
-    marginLeft: "10px",
     padding: "10px 15px",
     fontSize: "1rem",
     backgroundColor: "#007bff",
