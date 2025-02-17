@@ -73,23 +73,27 @@ function DrinkRecipes() {
       {/* Display Recipes */}
       <div style={styles.recipeList}>
         {filteredRecipes.length > 0 ? (
+          // map through all available recipes
           filteredRecipes.map((recipe) => (
             <div 
             key={recipe._id} 
             style={styles.recipeCard} 
+            // navigate to drink detail page if clicked
             onClick={() => navigate(`/drink/${recipe._id}`)}
             >
+              {/* display image, if no image available, display placeholder*/}
               <img src={recipe.imageUrl || "https://via.placeholder.com/150"} alt={recipe.name} style={styles.image} />
               <h3 style={styles.recipeName}>{recipe.name}</h3>
+              <div style={styles.ingredientHeader}>
+                <strong>Ingredients:</strong>  
+                <span style={styles.rates}>⭐{recipe.avgRate.toFixed(1)}</span><br/>
+                </div>
               <p style={styles.recipeDetails}>
-                <strong>Average Rating:</strong> ⭐{recipe.avgRate.toFixed(1)}
-              </p>
-              <p style={styles.recipeDetails}>
-                <strong>Ingredients:</strong><br/>
-                {" "}
                 {recipe.ingredients
                 .filter(ing => ing.ingredient)
-                .map((ing) => `${ing.measure} ${ing.ingredient}`).join(", ")}
+                // display only ingredient if measure is null
+                .map((ing) => ing.measure ? `${ing.measure} ${ing.ingredient}`: ing.ingredient)
+                .join(", ")}
               </p>
             </div>
           ))
@@ -169,6 +173,17 @@ const styles = {
   recipeDetails: {
     fontSize: "0.9rem",
     margin: "5px 0",
+    textAlign: "left",
+  },
+  ingredientHeader: {
+    display: "flex",
+    justifyContent: "space-between", 
+    alignItems: "center", 
+    fontSize: "0.9rem",
+    marginBottom: "5px",
+  },
+  rates: {
+    textAlign: "right",
   },
   noResults: {
     fontSize: "1.2rem",
