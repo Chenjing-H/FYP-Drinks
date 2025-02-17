@@ -1,15 +1,15 @@
 # FYP-Drinks
 
-Application Structure
+## Application Structure
 
-# Backend
+### Backend
 
 NodeJS server with MongoDB database
 
 1. cd backend
 2. nodemon app.js
 
-# Frontend
+### Frontend
 
 React application
 
