@@ -167,7 +167,7 @@ const styles = {
     borderRadius: "5px",
   },
   recipeName: {
-    fontSize: "1.5rem",
+    fontSize: "1.4rem",
     margin: "10px 0",
   },
   recipeDetails: {
