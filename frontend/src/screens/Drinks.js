@@ -8,6 +8,7 @@ function DrinkRecipes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [ingredientSearch, setIngredientSearch] = useState("");
   const [filteredRecipes, setFilteredRecipes] = useState([]);
+  const [savedRecipes, setSavedRecipes] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,15 +16,21 @@ function DrinkRecipes() {
     const fetchRecipes = async () => {
       try {
         const response = await axios.get("http://localhost:5173/drink-recipes");
+        // sort by avgRates
+        const sortedRecipes = response.data.sort((a,b)=>b.avgRate-a.avgRate);
         // initialize recipes and filtered recipes to all
-        setRecipes(response.data);
-        setFilteredRecipes(response.data);
+        setRecipes(sortedRecipes);
+        setFilteredRecipes(sortedRecipes);
       } catch (error) {
         console.error("Error fetching drink recipes:", error);
       }
     };
 
     fetchRecipes();
+
+    // save recipes
+    const saved = JSON.parse(localStorage.getItem("savedRecipes")) || {};
+    setSavedRecipes(saved);
   }, []);
 
   // Handle search for drink recipes
@@ -42,8 +49,16 @@ function DrinkRecipes() {
       console.error("Error searching recipes:", error);
       setFilteredRecipes([]);
     }
-  }
+  };
 
+
+  const toggleSaveRecipe = (id) => {
+    setSavedRecipes((prev) => {
+      const updated = { ...prev, [id] : !prev[id] };
+      localStorage.setItem("savedRecipes", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
 
   return (
@@ -95,6 +110,13 @@ function DrinkRecipes() {
                 .map((ing) => ing.measure ? `${ing.measure} ${ing.ingredient}`: ing.ingredient)
                 .join(", ")}
               </p>
+
+              {/* save button */}
+              <button style={styles.saveButton} 
+                onClick={(e)=> {e.stopPropagation(); toggleSaveRecipe(recipe._id)}}
+                >
+                  {savedRecipes[recipe._id] ? "♥" : "♡"}
+              </button>
             </div>
           ))
         ) : (
@@ -150,8 +172,9 @@ const styles = {
   },
   recipeList: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr",
+    gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
     gap: "20px",
+    alignItems: "stretch",
   },
   recipeCard: {
     backgroundColor: "#fff",
@@ -159,6 +182,8 @@ const styles = {
     borderRadius: "8px",
     boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
     textAlign: "center",
+    position: "relative",
+    cursor: "pointer",
   },
   image: {
     width: "100%",
@@ -169,11 +194,14 @@ const styles = {
   recipeName: {
     fontSize: "1.4rem",
     margin: "10px 0",
+    wordWrap: "break-word",
+    whiteSpace: "normal",
   },
   recipeDetails: {
     fontSize: "0.9rem",
     margin: "5px 0",
     textAlign: "left",
+    wordWrap: "break-word",
   },
   ingredientHeader: {
     display: "flex",
@@ -184,6 +212,16 @@ const styles = {
   },
   rates: {
     textAlign: "right",
+  },
+  saveButton: {
+    position: "absolute",
+    bottom: "10px",
+    right: "10px",
+    background: "none", 
+    fontSize: "1.5rem",
+    cursor: "pointer",
+    border: "none",
+    marginTop: "auto", 
   },
   noResults: {
     fontSize: "1.2rem",

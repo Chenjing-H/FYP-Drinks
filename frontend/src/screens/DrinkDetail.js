@@ -24,6 +24,7 @@ function RecipeInstructions({ instructions }) {
 function DrinkDetails() {
     const { id } = useParams();
     const [drink, setDrink] = useState(null);
+    const [savedRecipes, setSavedRecipes] = useState({});
     const [activeTab, setActiveTab] = useState("ingredients");
     const navigate = useNavigate();
 
@@ -38,19 +39,37 @@ function DrinkDetails() {
         };
 
         fetchDrinkDetails();
+
+        // save recipes
+        const saved = JSON.parse(localStorage.getItem("savedRecipes")) || {};
+        setSavedRecipes(saved);
     }, [id]);
 
     if (!drink) return <p>No drink selected</p>;
+
+    const toggleSaveRecipe = () => {
+        setSavedRecipes((prev) => {
+          const updated = { ...prev, [id] : !prev[id] };
+          localStorage.setItem("savedRecipes", JSON.stringify(updated));
+          return updated;
+        });
+    };
 
     return (
         <div style={styles.container}>
             <div style={styles.contentWrapper}>
                 <div style={styles.leftColumn}>
                 <button onClick={() => navigate("/")} style={styles.backButton}>← Back</button>
-            
-                    <h2 style={styles.title}>{drink.name}</h2>
                     <img src={drink.imageUrl || "https://via.placeholder.com/300"} alt={drink.name} style={styles.image} />
-                    <p><strong>Average Rating:</strong> ⭐{drink.avgRate.toFixed(1)}</p>
+                    <h2 style={styles.title}>{drink.name}</h2>
+                    <div style={styles.ratingRow}>
+                        <p><strong>Average Rating:</strong> ⭐{drink.avgRate.toFixed(1)}</p>
+                        {/* save button */}
+                        <button style={styles.saveButton} 
+                            onClick={toggleSaveRecipe}>
+                            {savedRecipes[id] ? "♥" : "♡"}
+                        </button>
+                    </div>
                 </div>
 
                 <div style={styles.rightColumn}>
@@ -108,15 +127,23 @@ const styles = {
         width: "55%",
         textAlign: "left",
     },
+    ratingRow: {
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        marginTop: "10px",
+    },
     title: {
         fontSize: "2rem",
         marginBottom: "1rem",
+        textAlign: "center",
     },
     image: {
         width: "90%",
         height: "300px",
         objectFit: "cover",
         borderRadius: "5px",
+        marginTop: "10%",
     },
     backButton: {
         textAlign: "left",
@@ -127,6 +154,13 @@ const styles = {
         backgroundColor: "#0080ff",
         color: "white",
         cursor: "pointer",
+    },
+    saveButton: {
+        background: "none", 
+        fontSize: "1.5rem",
+        cursor: "pointer",
+        border: "none",
+        marginRight: "9%",
     },
     ingredientList: {
         listStyleType: "square",

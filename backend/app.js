@@ -134,8 +134,8 @@ app.get("/drink-recipes", async (req, res) => {
             };
         }
 
-        // find all matched recipes
-        const recipes = await AllDrinkRecipes.find(query);
+        // find all matched recipes and display by avgRates from highest to lowest
+        const recipes = await AllDrinkRecipes.find(query).sort({avgRate: -1});
 
         // if no recipes matches
         if (recipes.length === 0) {

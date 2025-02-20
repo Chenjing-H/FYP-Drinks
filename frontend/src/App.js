@@ -47,6 +47,7 @@ const styles = {
     position: "fixed",
     top: 0,
     left: 0, 
+    zIndex: 1000,
   },
   navbarContainer: {
     maxWidth: "90%",
