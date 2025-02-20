@@ -132,7 +132,7 @@ const styles = {
   searchButton: {
     padding: "10px 15px",
     fontSize: "1rem",
-    backgroundColor: "#007bff",
+    backgroundColor: "#0080ff",
     color: "white",
     border: "none",
     borderRadius: "5px",
@@ -142,7 +142,7 @@ const styles = {
     marginLeft: "10px",
     padding: "10px 15px",
     fontSize: "1rem",
-    backgroundColor: "#007bff",
+    backgroundColor: "#0080ff",
     color: "white",
     border: "none",
     borderRadius: "5px",
