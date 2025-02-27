@@ -28,7 +28,11 @@ userDetailsDB.on("error", (error) => console.log("UserDetails DB connection erro
 const UserSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }
+    password: { type: String, required: true }, 
+    profileImage: {
+        type: String, 
+        default: "https://www.vecteezy.com/free-vector/profile-icon",
+    }
 }, { timestamps: true });
 const User = userDetailsDB.model("User", UserSchema, "User");
 
@@ -40,7 +44,7 @@ const DrinkRecipeSchema = new mongoose.Schema({
     category: { type: String, required: true },
     imageUrl: { type: String, default:'' },
     avgRate: { type: Number, default: 0.0 }, 
-    alcoholic: {type: Boolean }, 
+    alcoholic: {type: String, enum: ["Alcoholic, Non-Alcoholic, Optional-Alcoholic"], required: true }, 
     glass: { type: String }
 }, { timestamps: true });
 const AllDrinkRecipes = drinkRecipeDB.model("AllDrink", DrinkRecipeSchema, "AllDrink");
@@ -64,7 +68,7 @@ app.post("/signup", async (req, res) => {
     try {
         // save user to database with password being encrypted
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ name, email, password: hashedPassword });
+        const user = new User({ name, email, password: hashedPassword, profileImage: req.body.profileImage || "https://www.vecteezy.com/free-vector/profile-icon" });
         await user.save();
         res.status(201).json({ message: "User created successfully" });
     } catch (error) {
@@ -86,10 +90,11 @@ app.post("/login", async (req, res) => {
         res.json({ message: "Login successful",
             user: {
                 name: user.name,
-                email: user.email
+                email: user.email,
+                profileImage: user.profileImage || "https://via.placeholder.com/150"
             } });
     } catch (e) {
-        console.error("Login unsuccessed", e);
+        console.error("Login failed", e);
         res.status(500).json({ message: "Error logging in", e});
     }
 });
@@ -111,6 +116,29 @@ app.get("/users", async (req, res) => {
         res.status(500).json({ message: "Error fetching users", error });
     }
 });
+
+
+app.put("/user/update", async (req, res) => {
+    try {
+      const { name, email, password, profileImage } = req.body;
+      const user = await User.findOne({ email });
+
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      if (name) user.name = name;
+      if (profileImage) user.profileImage = profileImage;
+      if (password) {
+        updateData.password = await bcrypt.hash(password, 10); // Hash new password
+      }
+
+      await user.save();
+  
+      res.json({ message: "Profile updated", user: updatedUser });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
 // Display Drink Recipes
 app.get("/drink-recipes", async (req, res) => {

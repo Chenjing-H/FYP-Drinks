@@ -4,7 +4,7 @@ import axios from "axios";
 
 function RecipeInstructions({ instructions }) {
     // split instructions into numbered steps
-    const steps = instructions.split(". ").filter(Boolean);
+    const steps = instructions.split(".").filter(Boolean);
   
     return (
         <ol style={styles.instructionList}>
@@ -22,6 +22,7 @@ function RecipeInstructions({ instructions }) {
 
   
 function DrinkDetails() {
+    // hooks to store drink recipes and search filters
     const { id } = useParams();
     const [drink, setDrink] = useState(null);
     const [savedRecipes, setSavedRecipes] = useState({});
@@ -59,7 +60,7 @@ function DrinkDetails() {
         <div style={styles.container}>
             <div style={styles.contentWrapper}>
                 <div style={styles.leftColumn}>
-                <button onClick={() => navigate("/")} style={styles.backButton}>← Back</button>
+                    <button onClick={() => navigate("/")} style={styles.backButton}>← Back</button><br/>
                     <img src={drink.imageUrl || "https://via.placeholder.com/300"} alt={drink.name} style={styles.image} />
                     <h2 style={styles.title}>{drink.name}</h2>
                     <div style={styles.ratingRow}>
