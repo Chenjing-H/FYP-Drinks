@@ -44,8 +44,15 @@ const DrinkRecipeSchema = new mongoose.Schema({
     category: { type: String, required: true },
     imageUrl: { type: String, default:'' },
     avgRate: { type: Number, default: 0.0 }, 
-    alcoholic: {type: String, enum: ["Alcoholic, Non-Alcoholic, Optional-Alcoholic"], required: true }, 
-    glass: { type: String }
+    alcoholic: {type: String, required: true }, 
+    glass: { type: String }, 
+    comments: [{
+        user: String, 
+        text: String, 
+        date: {type: Date, default: Date.now }, 
+        likes: {type: Number, default: 0},
+        likedBy: {type:[String], default: [] }
+    }]
 }, { timestamps: true });
 const AllDrinkRecipes = drinkRecipeDB.model("AllDrink", DrinkRecipeSchema, "AllDrink");
 
@@ -118,27 +125,27 @@ app.get("/users", async (req, res) => {
 });
 
 
-app.put("/user/update", async (req, res) => {
-    try {
-      const { name, email, password, profileImage } = req.body;
-      const user = await User.findOne({ email });
+// app.put("/user/update", async (req, res) => {
+//     try {
+//       const { name, email, password, profileImage } = req.body;
+//       const user = await User.findOne({ email });
 
-      if (!user) return res.status(404).json({ message: "User not found" });
+//       if (!user) return res.status(404).json({ message: "User not found" });
       
-      if (name) user.name = name;
-      if (profileImage) user.profileImage = profileImage;
-      if (password) {
-        updateData.password = await bcrypt.hash(password, 10); // Hash new password
-      }
+//       if (name) user.name = name;
+//       if (profileImage) user.profileImage = profileImage;
+//       if (password) {
+//         updateData.password = await bcrypt.hash(password, 10); // Hash new password
+//       }
 
-      await user.save();
+//       await user.save();
   
-      res.json({ message: "Profile updated", user: updatedUser });
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+//       res.json({ message: "Profile updated", user: updatedUser });
+//     } catch (error) {
+//       console.error("Error updating profile:", error);
+//       res.status(500).json({ message: "Internal server error" });
+//     }
+//   });
 
 // Display Drink Recipes
 app.get("/drink-recipes", async (req, res) => {
@@ -192,6 +199,116 @@ app.get("/drink-recipes/:id", async (req, res) => {
     }
 });
 
+// fetch comments
+app.get("/drink-recipes/:id/comments", async (req, res) => {
+    try {
+        const recipe = await AllDrinkRecipes.findById(req.params.id);
+        if (!recipe) {
+            return res.status(404).json({ message: "Drink not found" });
+        }
+
+        // Sort comments by likes (highest first) and date (newest first)
+        const sortedComments = recipe.comments.sort((a, b) => b.likes - a.likes || b.date - a.date);
+        
+        res.json(sortedComments);
+    } catch (error) {
+        console.error("Error fetching comments:", error);
+        res.status(500).json({ message: "Error fetching comments", error });
+    }
+});
+
+// add a comment
+app.post("/drink-recipes/:id/comments", async (req, res) => {
+    try {
+        const { user, text } = req.body;
+        const recipe = await AllDrinkRecipes.findById(req.params.id);
+
+        if (!recipe) {
+            return res.status(404).json({ message: "Drink not found"});
+        }
+
+        const newComment = { user, text, date: new Date(), likes: 0 };
+        recipe.comments.push(newComment);
+        await recipe.save();
+
+        res.status(201).json(recipe);
+    } catch (error) {
+        console.error("Error adding comment", error);
+        res.status(500).json({message: "Error adding comment", error});
+    }
+})
+
+// delete a comment
+app.delete("/drink-recipes/:id/comments/:commentId", async (req, res) => {
+    try {
+        // get user email from request
+        const { userEmail } = req.body;  
+        if (!userEmail) {
+            return res.status(400).json({ message: "User email is required" });
+        }
+
+        const recipe = await AllDrinkRecipes.findById(req.params.id);
+        if (!recipe) return res.status(404).json({ message: "Drink not found" });
+
+        // find the comment to delete
+        const comment = recipe.comments.id(req.params.commentId);
+        if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+        // check if the logged-in user is the comment owner
+        if (comment.user !== userEmail) {
+            return res.status(403).json({ message: "You can only delete your own comments" });
+        }
+
+        // remove the comment and save the drink
+        comment.remove();
+        await recipe.save();
+        
+        res.json(recipe.comments.sort((a, b) => b.likes - a.likes || new Date(b.date) - new Date(a.date)));
+    } catch (error) {
+        console.error("Error deleting comment:", error);
+        res.status(500).json({ message: "Error deleting comment", error });
+    }
+});
+
+
+// like a comment
+app.put("/drink-recipes/:id/comments/:commentId/like", async (req, res) => {
+    try {
+        // track who liked the comments
+        const { userEmail } = req.body;
+        const recipe = await AllDrinkRecipes.findById(req.params.id);
+        if (!recipe) {
+            return res.status(404).json({ message: "Drink not found" });
+        }
+
+        const comment = recipe.comments.id(req.params.commentId);
+        if (!comment) {
+            return res.status(404).json({ message: "Comment not found" });
+        }
+
+        if (!comment.likedBy) {
+            comment.likedBy = [];
+        }
+
+        // toggle likes
+        const userIndex = comment.likedBy.indexOf(userEmail);
+        // remove like if user already liked it
+        if (userIndex > -1) {
+            comment.likedBy.splice(userIndex, 1),
+            comment.likes -= 1;
+        // add like if hasn't 
+        } else {
+            comment.likedBy.push(userEmail);
+            comment.likes += 1;
+        }
+
+        await recipe.save();
+        res.json(recipe.comments.sort((a, b) => b.likes - a.likes || b.date - a.date));
+    } catch (error) {
+        console.error("Error liking comment:", error);
+        res.status(500).json({ message: "Error liking comment", error });
+    }
+});
 
 
 // --- Start server ---
