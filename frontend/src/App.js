@@ -5,24 +5,14 @@ import Signup from './screens/Signup';
 import Profile from './screens/Profile';
 import Drinks from './screens/Drinks';
 import DrinkDetail from './screens/DrinkDetail';
-
+import Navbar from './screens/Navbar';
+import CreateRecipe from "./screens/CreateRecipe";
+import EditRecipe from './screens/EditRecipe';
 
 function App() {
   return (
     <BrowserRouter>
-      {/* navbar */}
-        <nav style={styles.navbar}>
-          <div style={styles.navbarContainer}>
-            <Link to="/" style={styles.logo}>DrinkApp</Link>
-            <div style={styles.navbarLink}>
-              <Link to="/login" style={styles.link}>Login</Link>
-              <Link to="/signup" style={styles.link}>Signup</Link>
-              <Link to="/profile" style={styles.link}>Profile</Link>
-              <Link to="/drinks" style={styles.link}>Drinks</Link>
-            </div>
-          </div>
-        </nav>
-
+    <Navbar />
       <div style={styles.pageContent}>
       <Routes>
           <Route path="/login" element={<Login />} />
@@ -30,6 +20,8 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/drinks" element={<Drinks />} />
           <Route path="/drink/:id" element={<DrinkDetail />} />
+          <Route path="/create-recipe" element={<CreateRecipe />} />
+          <Route path="/edit-recipe/:recipeId" element={<EditRecipe />} />
           <Route path="*" element={<Drinks />} />
         </Routes>
       </div>

@@ -27,48 +27,101 @@ function DrinkDetails() {
     const [drink, setDrink] = useState(null);
     const [savedRecipes, setSavedRecipes] = useState({});
     const [activeTab, setActiveTab] = useState("ingredients");
+
+    const [userRating, setUserRating] = useState(0);
+    const [isRating, setIsRating] = useState(false);
+    const [showRatePopup, setShowRatePopup] = useState(false);
+
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
     const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || { name: "Guest" });
   
     const navigate = useNavigate();
 
+
+    const fetchDrinkDetails = async () => {
+        try {
+            const response = await axios.get(`http://localhost:5173/drink-recipes/${id}`);
+            const userEmail = JSON.parse(localStorage.getItem("user"))?.email || "guest";
+
+            // check if user already liked the comment
+            const updatedComments = response.data.comments.map(comment => ({
+                ...comment, liked: comment.likedBy?.includes(userEmail) || false,
+            }));
+
+            setDrink(response.data);
+            setComments(updatedComments);
+        } catch (error) {
+            console.error("Error fetching drink details:", error);
+        }
+    };
+
+    const fetchSavedRecipes = async () => {
+        try {
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (!user || !user._id) return;
+    
+            const response = await axios.get(`http://localhost:5173/user/${user._id}/saved-recipes`);
+            const savedRecipeIds = response.data.map(recipe => recipe._id);
+            
+            // convert the array into an object for quick lookup
+            const savedRecipesObject = savedRecipeIds.reduce((acc, id) => ({ ...acc, [id]: true }), {});
+    
+            setSavedRecipes(savedRecipesObject);
+        } catch (error) {
+            console.error("Error fetching saved recipes:", error);
+        }
+    };
+    
     useEffect(() => {
-        const fetchDrinkDetails = async () => {
-            try {
-                const response = await axios.get(`http://localhost:5173/drink-recipes/${id}`);
-                const userEmail = JSON.parse(localStorage.getItem("user"))?.email || "guest";
-
-                // check if user already liked the comment
-                const updatedComments = response.data.comments.map(comment => ({
-                    ...comment, liked: comment.likedBy?.includes(userEmail) || false,
-                }));
-
-                setDrink(response.data);
-                setComments(updatedComments);
-            } catch (error) {
-                console.error("Error fetching drink details:", error);
-            }
-        };
-
         fetchDrinkDetails();
-
-        // save recipes
-        const saved = JSON.parse(localStorage.getItem("savedRecipes")) || {};
-        setSavedRecipes(saved);
+        fetchSavedRecipes();  // Load saved recipes from backend
     }, [id]);
+    
 
     if (!drink) return <p>No drink selected</p>;
 
     // toggle save recipe
-    const toggleSaveRecipe = () => {
-        setSavedRecipes((prev) => {
-          const updated = { ...prev, [id] : !prev[id] };
-          localStorage.setItem("savedRecipes", JSON.stringify(updated));
-          return updated;
-        });
+    const toggleSaveRecipe = async() => {
+        try {
+          const user = JSON.parse(localStorage.getItem("user"));
+    
+          if (!user || !user._id) {
+            alert("You need to log in to save recipes.");
+            return;
+          }
+    
+          if (savedRecipes[id]) {
+            await axios.delete(`http://localhost:5173/user/${user._id}/save-recipe/${id}`);
+          } else {
+            await axios.post(`http://localhost:5173/user/${user._id}/save-recipe/${id}`);
+          }
+        //   setSavedRecipes(prev => ({ ...prev, [id]: !prev[id] }));
+        fetchSavedRecipes();
+        } catch (error) {
+          console.error("Error saving recipe:", error);
+        }
     };
 
+    const handleRateDrink = async (rating) => {
+        try {
+            setIsRating(true);
+            const response = await axios.put(`http://localhost:5173/drink-recipes/${id}/rate`, { rating });
+    
+            setDrink((prevDrink) => ({
+                ...prevDrink,
+                avgRate: response.data.avgRate,
+            }));
+    
+            setUserRating(rating);
+            setShowRatePopup(false); // Close the popup after rating
+        } catch (error) {
+            console.error("Error rating drink:", error);
+        } finally {
+            setIsRating(false);
+        }
+    };
+    
     // add a comment
     const handleAddComment = async () => {
         if (!newComment.trim()) return;
@@ -79,29 +132,27 @@ function DrinkDetails() {
             text: newComment,
           });
     
-          setComments(response.data.comments.sort((a, b) => b.likes - a.likes || new Date(b.date) - new Date(a.date)));
+          setComments(response.data.comments);
           setNewComment("");
         } catch (error) {
           console.error("Error adding comment:", error);
         }
       };
 
-      // delete a comment
-      const handleDeleteComment = async (commentId) => {
-        const userEmail = JSON.parse(localStorage.getItem("user"))?.email || "guest";
-
-        if (!userEmail) {
-            console.error("User not logged in.");
-            return;
-        }
-
-        try{
-            const response = await axios.delete(`http://localhost:5173/drink-recipes/${id}/comments/${commentId}`, {data: { userEmail: userEmail.trim().toLowerCase() }, headers: { "Content-Type": "application/json"}});
-            setComments(response.data);
+    // delete a comment
+    const handleDeleteComment = async (commentId) => {
+        try {
+            const response = await axios.delete(`http://localhost:5173/drink-recipes/${id}/comments/${commentId}`);
+    
+            // Update comments in state after deletion
+            setDrink((prevDrink) => ({
+                ...prevDrink,
+                comments: response.data.comments,
+            }));
         } catch (error) {
             console.error("Error deleting comment:", error);
         }
-      }
+    };
 
       // like a comment
       const handleLikeComment = async (commentId) => {
@@ -128,15 +179,54 @@ function DrinkDetails() {
             <div style={styles.contentWrapper}>
                 <div style={styles.leftColumn}>
                     <button onClick={() => navigate("/")} style={styles.backButton}>← Back</button><br/>
-                    <img src={drink.imageUrl || "https://via.placeholder.com/300"} alt={drink.name} style={styles.image} />
+                    <img src={drink.imageUrl 
+                        ? drink.imageUrl.startsWith("http") 
+                        ? drink.imageUrl  
+                        : `http://localhost:5173${drink.imageUrl}`
+                        : "https://via.placeholder.com/150"
+                    } alt={drink.name} style={styles.image} />
                     <h2 style={styles.title}>{drink.name}</h2>
+
+                    {/* Drink Labels */}
+                    <p style={styles.labels}>
+                        {drink.category} | {drink.alcoholic} | {drink.glass}
+                    </p>
+                    
+                    {/* Rating Popup */}
+                    {showRatePopup && (
+                        <div style={styles.popupOverlay}>
+                            <div style={styles.popup}>
+                                <h3>Rate {drink.name}</h3>
+                                <div style={styles.ratingButtons}>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button 
+                                            key={star} 
+                                            onClick={() => handleRateDrink(star)}
+                                            style={{ fontSize: "1.5rem", background: "none", border: "none", cursor: "pointer" }}
+                                        >
+                                            {star <= userRating ? "⭐" : "☆"}
+                                        </button>
+                                    ))}
+                                </div>
+                                <button onClick={() => setShowRatePopup(false)} style={styles.closeButton}>Close</button>
+                            </div>
+                        </div>
+                    )}
+
+
                     <div style={styles.ratingRow}>
                         <p><strong>Average Rating:</strong> ⭐{drink.avgRate.toFixed(1)}</p>
-                        {/* save button */}
-                        <button style={styles.saveButton} 
-                            onClick={toggleSaveRecipe}>
-                            {savedRecipes[id] ? "♥" : "♡"}
-                        </button>
+                        <div style={styles.buttonContainer}>
+                            {/* save button */}
+                            <button style={styles.saveButton} 
+                                onClick={(e)=> {e.stopPropagation(); toggleSaveRecipe(drink._id)}}>
+                                {savedRecipes[id] ? "♥" : "♡"}
+                            </button>
+                            {/* rate button */}
+                            <button onClick={() => setShowRatePopup(true)} style={styles.rateButton}>
+                                ⭐ 
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -180,25 +270,29 @@ function DrinkDetails() {
 
                         {/* display comments */}
                         <div>
-                            {comments.map((comment) => (
-                                <div key={comment._id} style={styles.comment}>
-                                    {/* username and comment */}
-                                    <div style={styles.commentText}>
-                                        <strong>{comment.user}</strong> : {comment.text}
-                                    </div>
-                                    {/* likes and delete */}
-                                    <div style={styles.likeContainer}>
-                                        <button style={styles.likeButton} onClick={() => handleLikeComment(comment._id)}>
-                                            {comment.liked ? "♥" : "♡"} {comment.likes}
-                                        </button>
+                            {comments.length > 0 ? (
+                                drink.comments.map((comment) => (
+                                    <div key={comment._id} style={styles.comment}>
+                                        {/* username and comment */}
+                                        <div style={styles.commentText}>
+                                            <strong>{comment.user}</strong>: {comment.text}
+                                        </div>
+                                        {/* likes and delete */}
+                                        <div style={styles.likeContainer}>
+                                            <button style={styles.likeButton} onClick={() => handleLikeComment(comment._id)}>
+                                                {comment.liked ? "♥" : "♡"} {comment.likes}
+                                            </button>
 
-                                        {/* only show delete button when the comment belongs to the user */}
-                                        {comment.user === user.name && (
-                                            <button style={styles.deleteButton} onClick={() => handleDeleteComment(comment._id)}>🗑</button>
-                                        )}
+                                            {/* Only show delete button when the comment belongs to the user */}
+                                            {comment.user === user.name && (
+                                                <button style={styles.deleteButton} onClick={() => handleDeleteComment(comment._id)}>🗑</button>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <p>No comments yet. Be the first to comment!</p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -233,6 +327,7 @@ const styles = {
         justifyContent: "space-between", 
         alignItems: "center", 
         marginTop: "10px",
+        marginRight: "10%",
     },
     title: {
         fontSize: "2rem",
@@ -256,6 +351,11 @@ const styles = {
         color: "white",
         cursor: "pointer",
     },
+    buttonContainer: {
+        display: "flex",
+        gap: "10px",
+        marginTop: "10px",
+    },
     saveButton: {
         background: "none", 
         fontSize: "1.5rem",
@@ -263,6 +363,47 @@ const styles = {
         border: "none",
         marginRight: "9%",
     },
+    rateButton: {
+        background: "none",
+        color: "black",
+        border: "none",
+        cursor: "pointer",
+        fontSize: "1.1rem",
+    },
+    popupOverlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    popup: {
+        backgroundColor: "white",
+        padding: "20px",
+        borderRadius: "8px",
+        boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)",
+        textAlign: "center",
+    },
+    ratingButtons: {
+        display: "flex",
+        gap: "5px",
+        marginTop: "10px",
+    },
+    closeButton: {
+        marginTop: "10px",
+        backgroundColor: "red",
+        color: "white",
+        border: "none",
+        padding: "8px 12px",
+        cursor: "pointer",
+        borderRadius: "5px",
+        fontSize: "1rem",
+    },
+
     ingredientList: {
         listStyleType: "square",
         textAlign: "left",

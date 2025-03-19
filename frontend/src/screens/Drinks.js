@@ -19,16 +19,29 @@ function DrinkRecipes() {
     // Fetch drink recipes database from the backend
     const fetchRecipes = async () => {
       try {
+        await fetchSavedRecipes();
+
         const response = await axios.get("http://localhost:5173/drink-recipes");
+        // const user = JSON.parse(localStorage.getItem("user"));
+        // let userRecipes = [];
+
+        // if (user && user._id) {
+        //   const userResponse = await axios.get(`http://localhost:5173/user/${user._id}/created-recipe`);
+        //   userRecipes = userResponse.data;
+        // }
+
+        // const allRecipes = [...response.data, ...userRecipes];
+
+        const allRecipes = response.data;
         // sort by avgRates
-        const sortedRecipes = response.data.sort((a,b)=>b.avgRate-a.avgRate);
+        const sortedRecipes = allRecipes.sort((a,b)=>b.avgRate-a.avgRate);
         // initialize recipes and filtered recipes to all
         setRecipes(sortedRecipes);
         setFilteredRecipes(sortedRecipes);
 
         // fetch by categories
         const uniqueCategories = [
-          ...new Set(response.data.map((drink) => drink.category).filter(Boolean)),
+          ...new Set(allRecipes.map((drink) => drink.category).filter(Boolean)),
         ];
         setCategories(uniqueCategories);
       } catch (error) {
@@ -44,23 +57,41 @@ function DrinkRecipes() {
   }, []);
 
 
+const fetchSavedRecipes = async () => {
+    try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user || !user._id) return;
+
+        const response = await axios.get(`http://localhost:5173/user/${user._id}/saved-recipes`);
+        const savedRecipeIds = response.data.map(recipe => recipe._id);
+        
+        // convert the array into an object for quick lookup
+        const savedRecipesObject = savedRecipeIds.reduce((acc, id) => ({ ...acc, [id]: true }), {});
+
+        setSavedRecipes(savedRecipesObject);
+    } catch (error) {
+        console.error("Error fetching saved recipes:", error);
+    }
+};
+
+
   // filter function
   useEffect(() => {
     let filtered = recipes;
 
     // filter by category
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter((drink) => selectedCategories.includes(drink.category));
+      filtered = filtered.filter((drink) => drink.category && selectedCategories.includes(drink.category));
     }
 
     // filter by alcoholic 
     if (selectedAlcoholic.length > 0) {
-      filtered = filtered.filter((drink) => selectedAlcoholic.includes(drink.alcoholic));
+      filtered = filtered.filter((drink) => drink.alcoholic && selectedAlcoholic.includes(drink.alcoholic));
     }
 
     // filter by rate
     if (selectedRatings.length > 0) {
-      filtered = filtered.filter((drink) => selectedRatings.some(rate => drink.avgRate >= rate));
+      filtered = filtered.filter((drink) => drink.rate && selectedRatings.some(rate => drink.avgRate >= rate));
     } 
 
     // search filter (by name)
@@ -110,31 +141,25 @@ function DrinkRecipes() {
     setFilteredRecipes(recipes);
   }
 
-  // // Handle search for drink recipes
-  // const handleSearch = async () => {
-  //   try {
-  //     const params = {};
-  //     if (searchTerm) params.name = searchTerm;
-  //     if (ingredientSearch) params.ingredients = ingredientSearch;
- 
-  //     // construct query string from params
-  //     const queryString = new URLSearchParams(params).toString();
-  //     const response = await axios.get(`http://localhost:5173/drink-recipes?${queryString}`);
+  const toggleSaveRecipe = async(recipeId) => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
 
-  //     setFilteredRecipes(response.data);
-  //   } catch (error) {
-  //     console.error("Error searching recipes:", error);
-  //     setFilteredRecipes([]);
-  //   }
-  // };
+      if (!user || !user._id) {
+        alert("You need to log in to save recipes.");
+        return;
+      }
 
-
-  const toggleSaveRecipe = (id) => {
-    setSavedRecipes((prev) => {
-      const updated = { ...prev, [id] : !prev[id] };
-      localStorage.setItem("savedRecipes", JSON.stringify(updated));
-      return updated;
-    });
+      if (savedRecipes[recipeId]) {
+        await axios.delete(`http://localhost:5173/user/${user._id}/save-recipe/${recipeId}`);
+      } else {
+        await axios.post(`http://localhost:5173/user/${user._id}/save-recipe/${recipeId}`);
+      }
+      // setSavedRecipes(prev => ({ ...prev, [recipeId]: !prev[recipeId] }));
+      fetchSavedRecipes();
+    } catch (error) {
+      console.error("Error saving recipe:", error);
+    }
   };
 
 
@@ -209,7 +234,12 @@ function DrinkRecipes() {
                 onClick={() => navigate(`/drink/${recipe._id}`)}
                 >
                   {/* display image, if no image available, display placeholder*/}
-                  <img src={recipe.imageUrl || "https://via.placeholder.com/150"} alt={recipe.name} style={styles.image} />
+                  <img src={recipe.imageUrl 
+                    ? recipe.imageUrl.startsWith("http") 
+                    ? recipe.imageUrl  
+                    : `http://localhost:5173${recipe.imageUrl}`
+                    : "https://via.placeholder.com/150"
+                  } alt={recipe.name} style={styles.image} />
                   <h3 style={styles.recipeName}>{recipe.name}</h3>
                   <div style={styles.ingredientHeader}>
                     <strong>Ingredients:</strong>  
