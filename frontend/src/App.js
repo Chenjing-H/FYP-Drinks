@@ -8,6 +8,12 @@ import DrinkDetail from './screens/DrinkDetail';
 import Navbar from './screens/Navbar';
 import CreateRecipe from "./screens/CreateRecipe";
 import EditRecipe from './screens/EditRecipe';
+import API_URL from './config';
+
+fetch(`${API_URL}/api/drinks`)
+  .then(response => response.json())
+  .then(data => console.log(data));
+
 
 function App() {
   return (

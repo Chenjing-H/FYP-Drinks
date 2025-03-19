@@ -7,6 +7,12 @@ const multer = require("multer");
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use(cors({
+    origin: "https://fyp-magicalmix-lje60yuyh-chenjings-projects-31fdec79.vercel.app", // Your frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
+
 
 // Set up file storage
 const storage = multer.diskStorage({
