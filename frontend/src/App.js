@@ -10,7 +10,7 @@ import CreateRecipe from "./screens/CreateRecipe";
 import EditRecipe from './screens/EditRecipe';
 import API_URL from './config';
 
-fetch(`${API_URL}/api/drinks`)
+fetch(`${API_URL}/drink-recipes`)
   .then(response => response.json())
   .then(data => console.log(data));
 
