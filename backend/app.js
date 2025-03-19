@@ -555,5 +555,5 @@ app.put("/drink-recipes/:id/rate", async (req, res) => {
 
 
 // --- Start server ---
-const PORT = 5173;
-app.listen(PORT, () => console.log(`Backend server started on http://localhost:${PORT}`));
+const PORT = process.env.PORT || 5173;
+app.listen(PORT, () => console.log(`Backend server started on http://0.0.0.0:${PORT}`));
