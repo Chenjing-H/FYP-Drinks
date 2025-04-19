@@ -11,15 +11,40 @@ function Profile() {
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState("saved");
   const [user, setUser] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [updatedUser, setUpdatedUser] = useState({
+    name: "",
+    email: "",
+    password: "",
+    profileImage: "",
+  })
 
+
+  // Update updatedUser whenever user data changes
+  useEffect(() => {
+    if (user) {
+      setUpdatedUser({
+        name: user.name || "",
+        email: user.email || "",
+        password: "",
+        profileImage: user.profileImage || "",
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      const parseUser = JSON.parse(user);
-      setUser(parseUser);
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parseUser = JSON.parse(storedUser);
+        setUser(parseUser);
+      } catch (error) {
+        console.error("Error parsing user from localStorage:", error);
+        localStorage.removeItem("user"); // Remove invalid data
+        navigate("/login");
+      }
     } else {
-      navigate('/login');
+      navigate("/login");
     }
   }, [navigate]);
 
@@ -57,9 +82,9 @@ function Profile() {
 
   const handleEditRecipe = async (recipeId) => {
     navigate(`/edit-recipe/${recipeId}`);
-};
+  };
 
-const handleDeleteRecipe = async (recipeId) => {
+  const handleDeleteRecipe = async (recipeId) => {
     if (!window.confirm("Are you sure you want to delete this recipe?")) return;
 
     try {
@@ -69,21 +94,91 @@ const handleDeleteRecipe = async (recipeId) => {
     } catch (error) {
       console.error("Error deleting recipe:", error);
     }
-};
+  };
+
+  // handle user detail editing
+  const handleEditToggle = () => setEditing(!editing);
+
+  const handleChange = (e) => {
+    setUpdatedUser({ ...updatedUser, [e.target.name]: e.target.value });
+  };
+
+  const handFileChange = (e) => {
+    setUpdatedUser({ ...updatedUser, profileImage: e.target.files[0] });
+  };
+
+  const handleSaveUserDetailChange = async () => {
+    const formData = new FormData();
+    formData.append("name", updatedUser.name);
+    formData.append("email", updatedUser.email);
+    if (updatedUser.password) formData.append("password", updatedUser.password);
+    if (updatedUser.profileImage instanceof File) {
+      formData.append("profileImage", updatedUser.profileImage);
+    }
+    try {
+      const response = await axios.put(`http://localhost:5173/user/${user._id}/edit`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+  
+      alert(response.data.message);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+      setUser(response.data.user);
+      setEditing(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile");
+    }
+  };
 
 
   return (
     <div style={styles.container}>
       {/* user detail */}
       <div style={styles.leftColumn}>
-        <img src={user.profileImage} onError={(e) => e.target.src = defaultProfileImg} alt="User Profile" style={styles.profileImage} />
-        
-        <h3 style={styles.username}>{user.name}</h3>
-        <p>{user.email}</p>
+        <img 
+          src={user.profileImage
+            ? user.profileImage.startsWith("http")
+            ? user.profileImage
+            : `http://localhost:5173${user.profileImage}`
+            : defaultProfileImg
+          }
+          onError={(e) => e.target.src = defaultProfileImg} 
+          alt="User Profile" style={styles.profileImage} 
+        />
+        <button onClick={handleEditToggle} style={styles.editProfileButton}>Edit Profile</button>
+            
+        {editing ? (
+          <div>
+            <div style={styles.PersonalInputGroup}>
+              <label>Name</label>
+              <input type="text" name="name" value={updatedUser.name} onChange={handleChange} placeholder="Name" style={styles.textInput}/>
+            </div>
+            <div style={styles.PersonalInputGroup}>
+              <label>Email</label>
+              <input type="email" name="email" value={updatedUser.email} onChange={handleChange} placeholder="Email" style={styles.textInput}/>
+            </div>
+            <div style={styles.PersonalInputGroup}>
+              <label>Password</label>
+              <input type="password" name="password" value={updatedUser.password} onChange={handleChange} placeholder="New Password" style={styles.textInput}/>
+            </div>
+            <div style={styles.PersonalInputGroup}>
+              <label>Image</label>
+              <input type="file" name="profileImage" onChange={handFileChange} />
+            </div>
+            <button onClick={handleSaveUserDetailChange} style={styles.saveButton}>Save</button>
+            <button onClick={handleEditToggle} style={styles.cancelButton}>Cancel</button>
+          </div>
+        ) : (
+          <div>
+            <h3 style={styles.username}>{user.name}</h3>
+            <p>{user.email}</p>
+          </div>
+        )}
       </div>
 
       {/* saved recipes */}
       <div style={styles.rightColumn}>
+      <h2 style={styles.recipeTitle}>📖 My Recipes</h2>
         {/* tab navigation */}
         <div style={styles.tabHeader}>
           <button style={activeTab === "saved" ? styles.activeTab : styles.tab} onClick={() => setActiveTab("saved")}>
@@ -97,7 +192,6 @@ const handleDeleteRecipe = async (recipeId) => {
         <div style={styles.tabContent}>
           {activeTab === "saved" ? (
             <div>
-              <h3>Saved Recipes</h3>
               {savedRecipes.length > 0 ? (
               <div style={styles.recipeList}>
                 {savedRecipes.map((recipe) => (
@@ -118,9 +212,8 @@ const handleDeleteRecipe = async (recipeId) => {
             </div>
           ) : (
             <div>
-              <h3>Created Recipes</h3>
               <button style={styles.addButton} onClick={() => navigate("/create-recipe")}>
-                {showForm ? "Cancel" : "+"}
+                {showForm ? "Cancel" : "Add Recipe"}
               </button>
 
               {createdRecipes.length > 0 ? (
@@ -152,84 +245,95 @@ const styles = {
     gap: "20px", 
     maxWidth: "90%", 
     margin: "auto",
-    padding: "20px", 
+    height: "80vh",
+  },
+  leftColumn: {
+    flex: 1,
+    paddingRight: "30px",
+    borderRight: "2px solid #e0e0e0",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  },
+  rightColumn: {
+    textAlign: "left",
+    padding: "20px",
+  },
+  profileImage: {
+    width: "40%",
+    objectFit: "cover",
+    borderRadius: "50%",
+    marginTop: "5%",
+    marginBottom: "20px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+  },
+  username: {
+    fontSize: "2rem",
+    marginBottom: "1rem",
+    textAlign: "center",
+  },
+  editProfileButton: {
+    backgroundColor: "#62c465",
+    color: "white",
+    border: "none",
+    padding: "10px",
+    margin: "5px",
+    cursor: "pointer",
+    borderRadius: "50px",
+  },
+  recipeTitle: { 
+    marginTop: "0", 
+    marginBottom: "20px",
+    fontSize: "40px",
   },
   tabHeader: {
     display: "flex",
     justifyContent: "left",
     alignItems: "flex-start",
     marginTop: "5%",
-    //maxWidth: "60%",
   },
   tab: {
     padding: "10px 20px",
+    margin: "10px 10px 10px 0",
     cursor: "pointer",
-    border: "none",
-    borderBottom: "none",
+    border: "2px solid #ccc",
+    borderRadius: "30px",
+    backgroundColor: "transparent",
     fontWeight: "bold",
-    fontSize: "20px",
+    fontSize: "15px",
   },
   activeTab: {
     padding: "10px 20px",
+    margin: "10px 10px 10px 0",
     cursor: "pointer",
-    border: "none",
-    borderBottom: "3px solid #0080ff",
+    border: "2px solid #0080ff",
+    borderRadius: "30px",
     backgroundColor: "#fff",
     fontWeight: "bold",
-    fontSize: "20px",
+    fontSize: "15px",
   },
   tabContent: {
     textAlign: "left",
     padding: "10px", 
     borderRadius: "5px",
-    backgroundColor: "#f9f9f9",
+    marginTop: "20px",
   }, 
-  leftColumn: {
-    textAlign: "left",
-    padding: "20px",  
-    backgroundColor: "pink",
-  },
-  rightColumn: {
-    textAlign: "left",
-    padding: "20px",
-    backgroundColor: "lavender",
-  },
-  profileImage: {
-    width: "90%",
-    height: "300px",
-    objectFit: "cover",
-    borderRadius: "5px",
-    marginTop: "10%",
-  },
-  username: {
-    fontSize: "1.5rem",
-    marginBottom: "1rem",
-  },
-  logoutButton: {
-    padding: "10px", 
-    backgroundColor: "transparent", 
-    border: "none",
-    cursor: "pointer", 
-    marginTop: "20%",
-    marginLeft: "70%",
-  },
   recipeList: {
     display: "grid", 
     gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", 
     gap: "20px",
   }, 
   recipeCard: {
-    backgroundColor: "#fff",
-    padding: "10px",
+    position: "relative",
+    overflow: "hidden",
     borderRadius: "8px",
     boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
     textAlign: "center",
-    position: "relative",
     cursor: "pointer",
   },
   image: {
     width: "100%",
-    height: "150px",
+    height: "180px",
     objectFit: "cover",
     borderRadius: "5px",
   },
@@ -239,21 +343,6 @@ const styles = {
     fontWeight: "bold",
     wordWrap: "break-word",
     whiteSpace: "normal",
-  },
-  formContainer: {
-    backgroundColor: "white",
-    padding: "20px",
-    borderRadius: "8px",
-    marginTop: "20px",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-  },
-  formGroup: {
-    marginBottom: "15px",
-  },
-  label: {
-    display: "block",
-    marginBottom: "5px",
-    fontWeight: "bold",
   },
   input: {
     width: "100%",
@@ -314,15 +403,14 @@ const styles = {
     cursor: "pointer",
     marginTop: "5px",
   },
-  submitButton: {
-    backgroundColor: "#0080ff",
+  addButton: {
+    backgroundColor: "#62c465",
     color: "white",
     border: "none",
-    borderRadius: "4px",
-    padding: "10px 20px",
-    fontSize: "16px",
+    padding: "5px 10px",
+    marginBottom: "20px",
     cursor: "pointer",
-    marginTop: "10px",
+    borderRadius: "4px",
   },
   editButton: {
     backgroundColor: "#FFA500",
@@ -342,6 +430,41 @@ const styles = {
     cursor: "pointer",
     borderRadius: "4px",
   },
+  PersonalInputGroup: {
+    marginBottom: "10px",
+    display: "flex",
+    flexDirection: "column",
+  },
+  label: {
+    display: "block",
+    marginBottom: "5px",
+    fontWeight: "bold",
+  },
+  textInput: {
+    marginTop: "10px",
+    marginRight: "10px",
+    padding: "8px",
+    borderRadius: "4px",
+    border: "1px solid #ddd",
+  },
+  saveButton: {
+    backgroundColor: "#0080ff",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    padding: "5px 10px",
+    cursor: "pointer",
+    marginTop: "10px",
+    marginRight: "10px",
+},
+cancelButton: {
+    backgroundColor: "#ff4d4d",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    padding: "5px 10px",
+    cursor: "pointer",
+},
 }
 
 

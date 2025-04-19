@@ -42,6 +42,18 @@ function DrinkDetails() {
     const fetchDrinkDetails = async () => {
         try {
             const response = await axios.get(`http://localhost:5173/drink-recipes/${id}`);
+
+            // add to recently viewed
+            const stored = JSON.parse(localStorage.getItem("recentViewed")) || [];
+            const alreadyExists = stored.find(d => d._id === response.data._id);
+
+            const updated = alreadyExists
+                ? [response.data, ...stored.filter(d => d._id !== response.data._id)]
+                : [response.data, ...stored];
+
+            // stores 4 most recent viewed recipes
+            localStorage.setItem("recentViewed", JSON.stringify(updated.slice(0, 4)));
+            
             const userEmail = JSON.parse(localStorage.getItem("user"))?.email || "guest";
 
             // check if user already liked the comment
@@ -75,7 +87,7 @@ function DrinkDetails() {
     
     useEffect(() => {
         fetchDrinkDetails();
-        fetchSavedRecipes();  // Load saved recipes from backend
+        fetchSavedRecipes();  
     }, [id]);
     
 
@@ -178,19 +190,24 @@ function DrinkDetails() {
         <div style={styles.container}>
             <div style={styles.contentWrapper}>
                 <div style={styles.leftColumn}>
-                    <button onClick={() => navigate("/")} style={styles.backButton}>← Back</button><br/>
-                    <img src={drink.imageUrl 
-                        ? drink.imageUrl.startsWith("http") 
-                        ? drink.imageUrl  
-                        : `http://localhost:5173${drink.imageUrl}`
-                        : "https://via.placeholder.com/150"
-                    } alt={drink.name} style={styles.image} />
-                    <h2 style={styles.title}>{drink.name}</h2>
+                    <div style={styles.imageWrapper}>
+                        <img src={drink.imageUrl 
+                            ? drink.imageUrl.startsWith("http") 
+                            ? drink.imageUrl  
+                            : `http://localhost:5173${drink.imageUrl}`
+                            : "https://via.placeholder.com/150"
+                        } alt={drink.name} style={styles.image} />
+                        <div style={styles.titleOverlay}>
+                            <h2 style={styles.title}>{drink.name}</h2>
+                        </div>
+                    </div>
 
                     {/* Drink Labels */}
-                    <p style={styles.labels}>
-                        {drink.category} | {drink.alcoholic} | {drink.glass}
-                    </p>
+                    <div style={styles.labels}>
+                        {drink.category && <p style={styles.label}>{drink.category}</p>}
+                        {drink.alcoholic && <p style={styles.label}>{drink.alcoholic}</p>}
+                        {drink.glass && <p style={styles.label}>{drink.glass}</p>}
+                    </div>
                     
                     {/* Rating Popup */}
                     {showRatePopup && (
@@ -305,14 +322,12 @@ const styles = {
     container: {
         maxWidth: "90%",
         margin: "auto",
-        padding: "20px",
         textAlign: "center",
     },
     contentWrapper: {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "flex-start",
-        marginTop: "5%",
     },
     leftColumn: {
         width: "40%",
@@ -322,6 +337,15 @@ const styles = {
         width: "55%",
         textAlign: "left",
     },
+    imageWrapper: {
+        position: "relative",
+        width: "90%",
+        height: "450px",
+        borderRadius: "40px",
+        overflow: "hidden",
+        marginTop: "10%",
+        boxShadow: "0px 6px 10px rgba(0, 0, 0, 0.1)",
+    },
     ratingRow: {
         display: "flex", 
         justifyContent: "space-between", 
@@ -329,27 +353,38 @@ const styles = {
         marginTop: "10px",
         marginRight: "10%",
     },
+    titleOverlay: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        width: "100%",
+        backgroundColor: "rgba(0, 0, 0, 0.1)",
+        padding: "10px",
+    },
     title: {
-        fontSize: "2rem",
-        marginBottom: "1rem",
-        textAlign: "center",
+        fontSize: "1.5rem",
+        fontWeight: "bold",
+        margin: 0,
+        color: "white",
+        padding: "0px 10px",
     },
     image: {
-        width: "90%",
-        height: "300px",
+        width: "100%",
+        height: "100%",
         objectFit: "cover",
-        borderRadius: "5px",
+        borderRadius: "40px",
         marginTop: "10%",
+        boxShadow: "0px 6px 10px rgba(0, 0, 0, 0.1)",
     },
-    backButton: {
-        textAlign: "left",
-        marginBottom: "10px",
-        padding: "10px",
-        borderRadius: "5px",
-        border: "none",
-        backgroundColor: "#0080ff",
-        color: "white",
-        cursor: "pointer",
+    labels: {
+        display: "flex",
+        gap: "12px"
+    },
+    label: {
+        border: "2px solid #66b3ff",
+        borderRadius: "30px",
+        padding: "3px 15px",
+        backgroundColor: "#ebf5ff",
     },
     buttonContainer: {
         display: "flex",
@@ -385,7 +420,7 @@ const styles = {
         backgroundColor: "white",
         padding: "20px",
         borderRadius: "8px",
-        boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.2)",
+        boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
         textAlign: "center",
     },
     ratingButtons: {

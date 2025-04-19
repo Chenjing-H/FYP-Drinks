@@ -6,13 +6,10 @@ const multer = require("multer");
 
 const app = express();
 app.use(express.json());
-app.use(cors());
 app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: ["http://localhost:3000", "https://fyp-drinks.onrender.com"],
     credentials: true
 }));
-
 
 // Set up file storage
 const storage = multer.diskStorage({
@@ -64,6 +61,7 @@ const DrinkRecipeSchema = new mongoose.Schema({
     instructions: { type: String, required: true },
     category: { type: String, required: true },
     imageUrl: { type: String, default:'' },
+    ratings: { type: [Number], default: [] },
     avgRate: { type: Number, default: 0.0 }, 
     alcoholic: {type: String, required: true }, 
     glass: { type: String }, 
@@ -148,28 +146,32 @@ app.get("/users", async (req, res) => {
     }
 });
 
+// Edit user details
+app.put("/user/:userId/edit", upload.single("profileImage"), async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { name, email, password } = req.body;
+        let profileImage = req.file ? `uploads/${req.file.filename}` : "";
 
-// app.put("/user/update", async (req, res) => {
-//     try {
-//       const { name, email, password, profileImage } = req.body;
-//       const user = await User.findOne({ email });
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        
+        if (name) user.name = name;
+        if (email) user.email = email;
+        if (password) user.password = await bcrypt.hash(password, 10);
+        if (req.file) {
+            user.profileImage = `/uploads/${req.file.filename}`;
+        }
 
-//       if (!user) return res.status(404).json({ message: "User not found" });
-      
-//       if (name) user.name = name;
-//       if (profileImage) user.profileImage = profileImage;
-//       if (password) {
-//         updateData.password = await bcrypt.hash(password, 10); // Hash new password
-//       }
-
-//       await user.save();
-  
-//       res.json({ message: "Profile updated", user: updatedUser });
-//     } catch (error) {
-//       console.error("Error updating profile:", error);
-//       res.status(500).json({ message: "Internal server error" });
-//     }
-//   });
+        await user.save();
+        res.json({ message: "Profile updated successfully", user });
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
 // Display Drink Recipes
 app.get("/drink-recipes", async (req, res) => {
@@ -223,34 +225,34 @@ app.get("/drink-recipes/:id", async (req, res) => {
     }
 });
 
-// save a recipe
+// Save a recipe
 app.post("/user/:userId/save-recipe/:recipeId", async (req, res) => {
     try {
       const { userId, recipeId } = req.params;
       
-      // Verify the recipe exists
+      // verify the recipe exists
       const recipe = await AllDrinkRecipes.findById(recipeId);
       if (!recipe) {
         return res.status(404).json({ message: "Recipe not found" });
       }
       
-      // Find user and update their saved recipes
+      // find user and update their saved recipes
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Initialize savedRecipes array if it doesn't exist
+      // initialize savedRecipes array if it doesn't exist
       if (!user.savedRecipes) {
         user.savedRecipes = [];
       }
       
-      // Check if recipe is already saved
+      // check if recipe is already saved
       if (user.savedRecipes.includes(recipeId)) {
         return res.status(400).json({ message: "Recipe already saved" });
       }
       
-      // Add recipe to saved recipes
+      // add recipe to saved recipes
       user.savedRecipes.push(recipeId);
       await user.save();
       
@@ -261,7 +263,7 @@ app.post("/user/:userId/save-recipe/:recipeId", async (req, res) => {
     }
   });
 
-// unsave a recipe
+// Unsave a recipe
 app.delete("/user/:userId/save-recipe/:recipeId", async (req, res) => {
     try {
       const { userId, recipeId } = req.params;
@@ -271,7 +273,7 @@ app.delete("/user/:userId/save-recipe/:recipeId", async (req, res) => {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Remove recipe from saved recipes
+      // remove recipe from saved recipes
       if (user.savedRecipes) {
         user.savedRecipes = user.savedRecipes.filter(id => id.toString() !== recipeId);
         await user.save();
@@ -284,7 +286,7 @@ app.delete("/user/:userId/save-recipe/:recipeId", async (req, res) => {
     }
   });
 
-// get saved recipes
+// Get saved recipes
 app.get("/user/:userId/saved-recipes", async (req, res) => {
     try {
       const { userId } = req.params;
@@ -294,12 +296,12 @@ app.get("/user/:userId/saved-recipes", async (req, res) => {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // If you have a savedRecipes array in your user model
+      // if you have a savedRecipes array in your user model
       if (!user.savedRecipes || user.savedRecipes.length === 0) {
         return res.json([]);
       }
       
-      // Fetch the full recipe details
+      // fetch the full recipe details
       const savedRecipes = await AllDrinkRecipes.find({
         _id: { $in: user.savedRecipes }
       });
@@ -311,7 +313,7 @@ app.get("/user/:userId/saved-recipes", async (req, res) => {
     }
   });
   
-// get created recipes
+// Get created recipes
 app.get("/user/:userId/created-recipe", async (req, res) => {
     try {
       const { userId } = req.params;
@@ -336,7 +338,7 @@ app.get("/user/:userId/created-recipe", async (req, res) => {
     }
   });
 
-// add self-created recipe
+// Add self-created recipe
 app.post("/user/:userId/add-recipe", upload.single("image"), async(req, res) => {
     try {
         const { userId } = req.params;
@@ -371,7 +373,7 @@ app.post("/user/:userId/add-recipe", upload.single("image"), async(req, res) => 
     }
 });
 
-// edit created recipe
+// Edit created recipe
 app.put("/user/:userId/edit-recipe/:recipeId", upload.single("image"), async (req, res) => {
     try {
         const { userId, recipeId } = req.params;
@@ -405,7 +407,7 @@ app.put("/user/:userId/edit-recipe/:recipeId", upload.single("image"), async (re
     }
 })
 
-// delete created recipe
+// Delete created recipe
 app.delete("/user/:userId/delete-recipe/:recipeId", async (req, res) => {
     try {
         const { userId, recipeId } = req.params;
@@ -424,7 +426,7 @@ app.delete("/user/:userId/delete-recipe/:recipeId", async (req, res) => {
 });
 
 
-// fetch comments
+// Fetch comments
 app.get("/drink-recipes/:recipeId/comments", async (req, res) => {
     try {
         const recipe = await AllDrinkRecipes.findById(req.params.recipeId);
@@ -432,7 +434,7 @@ app.get("/drink-recipes/:recipeId/comments", async (req, res) => {
             return res.status(404).json({ message: "Drink not found" });
         }
 
-        // Sort comments by likes (highest first) and date (newest first)
+        // sort comments by likes (highest first) and date (newest first)
         const sortedComments = recipe.comments.sort((a, b) => b.likes - a.likes || b.date - a.date);
         
         res.json(sortedComments);
@@ -442,7 +444,7 @@ app.get("/drink-recipes/:recipeId/comments", async (req, res) => {
     }
 });
 
-// add a comment
+// Add a comment
 app.post("/drink-recipes/:recipeId/comments", async (req, res) => {
     try {
         const { user, text } = req.body;
@@ -464,7 +466,7 @@ app.post("/drink-recipes/:recipeId/comments", async (req, res) => {
     }
 })
 
-// delete a comment
+// Delete a comment
 app.delete("/drink-recipes/:recipeId/comments/:commentId", async (req, res) => {
     try {
         const { recipeId, commentId } = req.params;
@@ -474,7 +476,7 @@ app.delete("/drink-recipes/:recipeId/comments/:commentId", async (req, res) => {
             return res.status(404).json({ message: "Drink not found" });
         }
 
-        // Filter out the comment to delete
+        // filter out the comment to delete
         recipe.comments = recipe.comments.filter(comment => comment._id.toString() !== commentId);
 
         await recipe.save();
@@ -486,7 +488,7 @@ app.delete("/drink-recipes/:recipeId/comments/:commentId", async (req, res) => {
 });
 
 
-// like a comment
+// Like a comment
 app.put("/drink-recipes/:id/comments/:commentId/like", async (req, res) => {
     try {
         // track who liked the comments
@@ -525,11 +527,11 @@ app.put("/drink-recipes/:id/comments/:commentId/like", async (req, res) => {
     }
 });
 
-// rate a drink
+// Rate a drink
 app.put("/drink-recipes/:id/rate", async (req, res) => {
     try {
         const { rating } = req.body;
-        if (!rating || rating < 1 || rating > 5) {
+        if (typeof rating != "number" || rating < 0 || rating > 5) {
             return res.status(400).json({ message: "Invalid rating value. Must be between 1 and 5." });
         }
 
@@ -538,15 +540,15 @@ app.put("/drink-recipes/:id/rate", async (req, res) => {
             return res.status(404).json({ message: "Drink not found" });
         }
 
-        // Ensure rating history is stored
+        // ensure rating history is stored
         if (!recipe.ratings) {
             recipe.ratings = [];
         }
 
-        // Store the new rating
+        // store the new rating
         recipe.ratings.push(rating);
 
-        // Update avgRate using formula: totalRates / numOfRates
+        // avgRate = totalRates / numOfRates
         const totalRates = recipe.ratings.reduce((sum, rate) => sum + rate, 0);
         recipe.avgRate = totalRates / recipe.ratings.length;
 
@@ -562,4 +564,4 @@ app.put("/drink-recipes/:id/rate", async (req, res) => {
 
 // --- Start server ---
 const PORT = process.env.PORT || 5173;
-app.listen(PORT, () => console.log(`Backend server started on http://0.0.0.0:${PORT}`));
+app.listen(PORT, () => console.log(`Backend server started on http://localhost:${PORT}`));

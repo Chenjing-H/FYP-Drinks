@@ -1,3 +1,4 @@
+import { Outlet } from "react-router";
 import { useNavigate, Link } from "react-router-dom";
 
 function Navbar() {
@@ -11,71 +12,110 @@ function Navbar() {
     };
 
     return (
+      <div style={styles.container}>
         <nav style={styles.navbar}>
-            <div style={styles.navbarContainer}>
-                <Link to="/" style={styles.logo}>DrinkApp</Link>
+            <div style={styles.topBar}>
+                <Link to="/" style={styles.logo}>MagicalMix</Link>
                 <div style={styles.navbarLink}>
                     {user ? (
                         <>
-                            <Link to="/drinks" style={styles.link}>Drinks</Link>
-                            <Link to="/profile" style={styles.link}>Profile</Link>
-                            <button onClick={handleLogout} style={styles.logoutButton}>Logout</button>
+                            <button onClick={handleLogout} style={styles.logoutButton}>Log out</button>
                         </>
                     ) : (
-                        <>
-                            <Link to="/login" style={styles.link}>Login</Link>
-                            <Link to="/signup" style={styles.link}>Signup</Link>
-                            <Link to="/drinks" style={styles.link}>Drinks</Link>
-                        </>
+                        <> </>
                     )}
             </div>
           </div>
         </nav>
-      );
+
+        {/* Main content */}
+        <div style={styles.main}>
+          <Outlet />
+        </div>
+
+        {/* Bottom Navigation */}
+        <footer style={styles.bottomBar}>
+          <button style={styles.tab} onClick={() => navigate("/")}>Main</button>
+          <button style={styles.tab} onClick={() => navigate("/profile")}>Profile</button>
+          <button style={styles.tab} onClick={() => navigate("/drinks")}>Drinks</button>
+        </footer>
+      </div>
+    );
 }
 
 const styles = {
-    navbar: {
-      width: "100%",
-      backgroundColor: "#7a9bff", 
-      padding: "15px",
-      boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
-      position: "fixed",
-      top: 0,
-      left: 0, 
-      zIndex: 1000,
-    },
-    navbarContainer: {
-      maxWidth: "90%",
-      margin: "0 auto",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "0 20px",    
-    },
-    logo: {
-      fontSize: "1.5rem",
-      fontWeight: "bold",
-      color: "white",
-      textDecoration: "none",
-    },
-    navbarLink: {
-      display: "flex",
-      gap: "20px",
-    },
-    link: {
+  container: {
+    minHeight: "100%",
+    display: "flex",
+    flexDirection: "column",
+  },
+  navbar: {
+    width: "100%",
+    backgroundColor: "white", 
+    padding: "15px",
+    boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
+    position: "fixed",
+    top: 0,
+    left: 0, 
+    zIndex: 1000,
+  },
+  topBar: {
+    maxWidth: "100%",
+    margin: "0 auto",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0 20px",    
+  },
+  main: {
+    flexGrow: 1,
+    top: 0,
+    marginBottom: "5%",
+  },
+  bottomBar: {
+    backgroundColor: "white",
+    padding: "15px",
+    display: "flex",
+    justifyContent: "space-around",
+    position: "fixed",
+    width: "100%",
+    boxShadow: "0 -4px 6px rgba(0,0,0,0.1)",
+    left: 0,
+    bottom: 0,
+    zIndex: 1000,
+  },
+  logo: {
+    fontSize: "1.5rem",
+    fontWeight: "bold",
+    color: "#0275e6",
+    textDecoration: "none",
+    marginLeft: "40%",
+  },
+  navbarLink: {
+    display: "flex",
+    gap: "20px",
+  },
+  link: {
+    fontSize: "1rem",
+    textDecoration: "none",
+    marginRight: "15px",
+    color: "#194f85",
+  },
+  logoutButton: {
       fontSize: "1rem",
-      color: "white",
       textDecoration: "none",
-    },
-    logoutButton: {
-        fontSize: "1rem",
-        color: "white",
-        textDecoration: "none",
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-    }, 
-  };
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      marginRight: "15px",
+  }, 
+  tab: {
+    background: "none",
+    border: "none",
+    fontWeight: "bold",
+    fontSize: "1rem",
+    cursor: "pointer",
+  },
+};
 
 export default Navbar;  

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './screens/Login';
 import Signup from './screens/Signup';
 import Profile from './screens/Profile';
@@ -8,11 +8,26 @@ import DrinkDetail from './screens/DrinkDetail';
 import Navbar from './screens/Navbar';
 import CreateRecipe from "./screens/CreateRecipe";
 import EditRecipe from './screens/EditRecipe';
+import Homepage from "./screens/Homepage";
 import API_URL from './config';
 
-fetch(`${API_URL}/drink-recipes`)
-  .then(response => response.json())
-  .then(data => console.log(data));
+fetch(`${API_URL}/drink-recipes`, {
+  method: "GET",
+  headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("token")}` // ensure token is stored in localStorage
+  },
+  credentials: "include"  // if using cookies for authentication
+})
+.then(response => {
+  if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+  return response.json();
+})
+.then(data => console.log("Fetched data:", data))
+.catch(error => console.error("Error fetching drinks:", error));
+
 
 
 function App() {
@@ -23,12 +38,15 @@ function App() {
       <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/drinks" element={<Drinks />} />
-          <Route path="/drink/:id" element={<DrinkDetail />} />
-          <Route path="/create-recipe" element={<CreateRecipe />} />
-          <Route path="/edit-recipe/:recipeId" element={<EditRecipe />} />
-          <Route path="*" element={<Drinks />} />
+          <Route element={<Navbar />}>
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/drinks" element={<Drinks />} />
+            <Route path="/drink/:id" element={<DrinkDetail />} />
+            <Route path="/create-recipe" element={<CreateRecipe />} />
+            <Route path="/edit-recipe/:recipeId" element={<EditRecipe />} />
+            <Route path="/" element={<Homepage />} />
+            <Route path="*" element={<Homepage />} />
+          </Route>
         </Routes>
       </div>
     </BrowserRouter>
@@ -55,12 +73,6 @@ const styles = {
     alignItems: "center",
     padding: "0 20px",    
   },
-  logo: {
-    fontSize: "1.5rem",
-    fontWeight: "bold",
-    color: "white",
-    textDecoration: "none",
-  },
   navbarLink: {
     display: "flex",
     gap: "20px",
@@ -71,7 +83,6 @@ const styles = {
     textDecoration: "none",
   },
   pageContent: {
-    marginTop: "50px",
     padding: "20px",
   }
 }

@@ -11,6 +11,10 @@ function DrinkRecipes() {
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedAlcoholic, setSelectedAlcoholic] = useState([]);
+  const [tempMinRating, setTempMinRating] = useState("");
+  const [tempMaxRating, setTempMaxRating] = useState("");
+  const [minRating, setMinRating] = useState("");
+  const [maxRating, setMaxRating] = useState("");
   const [selectedRatings, setSelectedRatings] = useState([]);
   const [savedRecipes, setSavedRecipes] = useState({});
   const navigate = useNavigate();
@@ -22,16 +26,6 @@ function DrinkRecipes() {
         await fetchSavedRecipes();
 
         const response = await axios.get("http://localhost:5173/drink-recipes");
-        // const user = JSON.parse(localStorage.getItem("user"));
-        // let userRecipes = [];
-
-        // if (user && user._id) {
-        //   const userResponse = await axios.get(`http://localhost:5173/user/${user._id}/created-recipe`);
-        //   userRecipes = userResponse.data;
-        // }
-
-        // const allRecipes = [...response.data, ...userRecipes];
-
         const allRecipes = response.data;
         // sort by avgRates
         const sortedRecipes = allRecipes.sort((a,b)=>b.avgRate-a.avgRate);
@@ -90,9 +84,14 @@ const fetchSavedRecipes = async () => {
     }
 
     // filter by rate
-    if (selectedRatings.length > 0) {
-      filtered = filtered.filter((drink) => drink.rate && selectedRatings.some(rate => drink.avgRate >= rate));
-    } 
+    if (minRating !== "" || maxRating !== "") {
+      filtered = filtered.filter((drink) => {
+        const rating = drink.avgRate;
+        if (minRating !== "" && rating < parseFloat(minRating)) return false;
+        if (maxRating !== "" && rating > parseFloat(maxRating)) return false;
+        return true;
+      });
+    }    
 
     // search filter (by name)
     if (searchTerm.trim() !== "") {
@@ -112,7 +111,7 @@ const fetchSavedRecipes = async () => {
     }
 
     setFilteredRecipes(filtered);
-  }, [selectedCategories, selectedAlcoholic, selectedRatings, searchTerm, ingredientSearch, recipes]);
+  }, [selectedCategories, selectedAlcoholic, selectedRatings, minRating, maxRating, searchTerm, ingredientSearch, recipes]);
 
   // handle filter selection
   const handleCheckboxChange = (filterType, value) => {
@@ -136,6 +135,10 @@ const fetchSavedRecipes = async () => {
     setSelectedCategories([]);
     setSelectedAlcoholic([]);
     setSelectedRatings([]);
+    setMinRating("");
+    setMaxRating("");
+    setTempMinRating("");
+    setTempMaxRating("");
     setSearchTerm("");
     setIngredientSearch("");
     setFilteredRecipes(recipes);
@@ -169,7 +172,7 @@ const fetchSavedRecipes = async () => {
       <div style={styles.container}>
         {/* filter */}
         <div style={styles.sidebar}>
-          <h2>Filters</h2>
+          <h2 style={styles.title}>Filters</h2>
 
           {/* categories*/}
           <h4>Categories</h4>
@@ -190,13 +193,41 @@ const fetchSavedRecipes = async () => {
           ))}
 
           {/* ratings */}
-          <h4>Rates</h4>
-          {[0,1,2,3,4,5].map((rating, index) => (
-            <label key={index} style={styles.checkboxLabel}>
-              <input type="checkbox" checked={selectedRatings.includes(rating)} onChange={()=>handleCheckboxChange("rating", rating)} />
-              {rating}+
-            </label>
-          ))}
+          <h4>Rate Range</h4>
+          <div style={styles.rateRow}>
+            <div style={styles.rateInputRow}>
+              <input
+                type="number"
+                min="0"
+                max="5"
+                step="0.1"
+                value={tempMinRating}
+                placeholder="Min"
+                onChange={(e) => setTempMinRating(e.target.value)}
+                style={styles.rateInput}
+              />
+              <input
+                type="number"
+                min="0"
+                max="5"
+                step="0.1"
+                value={tempMaxRating}
+                placeholder="Max"
+                onChange={(e) => setTempMaxRating(e.target.value)}
+                style={styles.rateInput}
+              />
+            </div>
+            <button
+              onClick={() => {
+                setMinRating(tempMinRating);
+                setMaxRating(tempMaxRating);
+              }}
+              style={styles.rateButton}
+            >
+              Apply
+            </button>
+          </div>
+
 
           {/* clear all button */}
           <button onClick={clearFilters} style={styles.clearButton}>Clear</button>
@@ -313,6 +344,7 @@ const styles = {
     backgroundColor: "lavender",
     borderRadius: "10px",
     marginRight: "20px", 
+    textAlign: "left",
   },
   checkboxLabel: {
     display: "block", 
@@ -378,6 +410,28 @@ const styles = {
   noResults: {
     fontSize: "1.2rem",
     color: "#777",
+  },
+  rateRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    width: "90%",
+    marginBottom: "10%",
+  },
+  rateInputRow: {
+    display: "flex",
+    justifyContent: "space-between",
+  },
+  rateInput: {
+    marginRight: "10px",
+    width: "40%",
+  },
+  rateButton: {
+    backgroundColor: "#0080ff",
+    color: "white",
+    border: "none",
+    padding: "5px 10px",
+    cursor: "pointer",
+    borderRadius: "4px",
   },
 };
 
