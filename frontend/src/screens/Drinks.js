@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
+import '../css/responsive.css';
 
 function DrinkRecipes() {
   // hooks to store drink recipes and search filters
   const [recipes, setRecipes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [ingredientSearch, setIngredientSearch] = useState("");
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -17,6 +19,42 @@ function DrinkRecipes() {
   const [maxRating, setMaxRating] = useState("");
   const [selectedRatings, setSelectedRatings] = useState([]);
   const [savedRecipes, setSavedRecipes] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+    // recipes for pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentRecipes = filteredRecipes.slice(indexOfFirstItem, indexOfLastItem);
+  const [goToPageInput, setGoToPageInput] = useState("");
+
+  const totalPages = Math.ceil(filteredRecipes.length / itemsPerPage);
+  const totalItems = filteredRecipes.length;
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+  
+  const toggleFilters = () => {
+    setShowFilters(prev => !prev);
+  };
+
+  const getCenterPages = () => {
+    const pages = [];
+    // display page numbers before and after current page
+    const range = 2; 
+    const start = Math.max(1, currentPage - range);
+    const end = Math.min(totalPages, currentPage + range);
+  
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+  
+    return pages;
+  };
+  
+  // scroll to top after turning page
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -168,11 +206,29 @@ const fetchSavedRecipes = async () => {
 
   return (
     <div>
-      <h2 style={styles.title}>Drink Recipes</h2>
+      <button onClick={toggleFilters} className="menuButton">☰</button>
       <div style={styles.container}>
         {/* filter */}
-        <div style={styles.sidebar}>
+        <div style={styles.sidebar} className={`sidebar ${showFilters ? "show" : "hide"}`}>
           <h2 style={styles.title}>Filters</h2>
+
+          {/* Search Bar & Filter Button */}
+          <div style={styles.searchContainer}>
+            <input
+              type="text"
+              placeholder="Search name"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={styles.searchInput}
+            />
+            <input 
+            type="text"
+            placeholder="Search ingredients"
+            value={ingredientSearch}
+            onChange={(e) => setIngredientSearch(e.target.value)}
+            style={styles.searchInput}
+            />
+          </div>
 
           {/* categories*/}
           <h4>Categories</h4>
@@ -228,36 +284,16 @@ const fetchSavedRecipes = async () => {
             </button>
           </div>
 
-
           {/* clear all button */}
-          <button onClick={clearFilters} style={styles.clearButton}>Clear</button>
+          <button onClick={clearFilters} style={styles.clearButton} className="clearButton">Clear</button>
         </div>
 
         <div style={styles.mainContent}>
-          {/* Search Bar & Filter Button */}
-          <div style={styles.searchContainer}>
-            <input
-              type="text"
-              placeholder="Search name"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={styles.searchInput}
-            />
-            <input 
-            type="text"
-            placeholder="Search ingredients"
-            value={ingredientSearch}
-            onChange={(e) => setIngredientSearch(e.target.value)}
-            style={styles.searchInput}
-            />
-            {/* <button onClick={handleSearch} style={styles.searchButton}>Search</button> */}
-          </div>
-
           {/* Display Recipes */}
-          <div style={styles.recipeList}>
-            {filteredRecipes.length > 0 ? (
+          <div style={styles.recipeList} className="recipeRow">
+            {currentRecipes.length > 0 ? (
               // map through all available recipes
-              filteredRecipes.map((recipe) => (
+              currentRecipes.map((recipe) => (
                 <div 
                 key={recipe._id} 
                 style={styles.recipeCard} 
@@ -296,6 +332,90 @@ const fetchSavedRecipes = async () => {
               <p style={styles.noResults}>No recipes found.</p>
             )}
           </div>
+
+        {/* Pagination Buttons */}
+        <div style={styles.pagination}>
+        
+        {/* First Page */}
+        <button
+          onClick={() => setCurrentPage(1)}
+          disabled={currentPage === 1}
+          style={styles.paginationButton}
+        >
+          «
+        </button>
+
+        {/* Previous */}
+        <button
+          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+          disabled={currentPage === 1}
+          style={styles.paginationButton}
+        >
+          ‹
+        </button>
+
+        {/* Center Page Numbers */}
+        {getCenterPages().map((page) => (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            style={{
+              ...styles.paginationButton,
+              backgroundColor: page === currentPage ? "#007bff" : "#eee",
+              color: page === currentPage ? "white" : "black",
+              fontWeight: page === currentPage ? "bold" : "normal",
+            }}
+          >
+            {page}
+          </button>
+        ))}
+
+        {/* Next */}
+        <button
+          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+          disabled={currentPage === totalPages}
+          style={styles.paginationButton}
+        >
+          ›
+        </button>
+
+        {/* Last Page */}
+        <button
+          onClick={() => setCurrentPage(totalPages)}
+          disabled={currentPage === totalPages}
+          style={styles.paginationButton}
+        >
+          »
+        </button>
+
+        {/* Range text */}
+        <div style={styles.pageRange}>
+          {startItem} - {endItem} of {totalItems} recipes
+        </div>
+
+        {/* Page Jump Input */}
+        <div style={styles.pageJump}>
+          <input
+            type="number"
+            min="1"
+            max={totalPages}
+            value={goToPageInput}
+            placeholder="Go"
+            onChange={(e) => setGoToPageInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const page = Math.min(totalPages, Math.max(1, Number(goToPageInput)));
+                setCurrentPage(page);
+                setGoToPageInput("");
+              }
+            }}
+            style={styles.pageInput}
+          />
+          <span style={styles.pages}>of {totalPages}</span>
+        </div>
+      </div>
+
+
         </div>
       </div>
     </div>
@@ -305,38 +425,36 @@ const fetchSavedRecipes = async () => {
 const styles = {
   container: {
     display: "flex", 
-    maxWidth: "90%",
+    maxWidth: "100%",
     margin: "auto",
     padding: "20px",
     textAlign: "center",
   },
   title: {
-    fontSize: "2rem",
+    fontSize: "1.5rem",
     marginBottom: "1rem",
     textAlign: "center",
   },
   searchContainer: {
-    display: "flex",
-    justifyContent: "center",
     marginBottom: "20px",
   },
   searchInput: {
-    width: "70%",
+    width: "90%",
     padding: "10px",
-    marginRight:"10px",
     fontSize: "1rem",
     borderRadius: "5px",
     border: "1px solid #ccc",
+    marginBottom: "10px",
   },
   clearButton: {
     padding: "10px 15px",
-    marginTop: "10px",
     fontSize: "1rem",
     backgroundColor: "#0080ff",
     color: "white",
     border: "none",
     borderRadius: "5px",
     cursor: "pointer",
+    marginBottom: "10%"
   },
   sidebar: {
     width: "20%", 
@@ -414,12 +532,14 @@ const styles = {
   rateRow: {
     display: "flex",
     justifyContent: "space-between",
+    gap: "10%",
     width: "90%",
-    marginBottom: "10%",
+    marginBottom: "5%",
   },
   rateInputRow: {
     display: "flex",
     justifyContent: "space-between",
+    width: "90%",
   },
   rateInput: {
     marginRight: "10px",
@@ -433,6 +553,40 @@ const styles = {
     cursor: "pointer",
     borderRadius: "4px",
   },
+  pagination: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "10px",
+    marginTop: "30px",
+    flexWrap: "wrap",
+  },
+  paginationButton: {
+    padding: "6px 10px",
+    borderRadius: "5px",
+    border: "none",
+    cursor: "pointer",
+    backgroundColor: "lightgrey",
+  },
+  pageRange: {
+    marginLeft: "15px",
+    fontSize: "1rem",
+  },
+  pageJump: {
+    marginLeft: "10px",
+    display: "flex",
+    alignItems: "center",
+  },
+  pageInput: {
+    width: "40px",
+    padding: "5px",
+    marginRight: "5px",
+    border: "1px solid #ccc",
+    borderRadius: "5px",
+  },
+  pages: {
+    fontSize: "1rem",
+  }
 };
 
 export default DrinkRecipes;

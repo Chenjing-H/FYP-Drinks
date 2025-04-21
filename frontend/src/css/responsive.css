@@ -1,0 +1,178 @@
+/* ========== DRINKS IN GENERAL ========== */
+.sidebar {
+  display: none;
+  position: fixed;
+  top: 30px; 
+  left: 0;
+  z-index: 999;
+  width: 30%;
+  height: calc(100% - 60px);
+  overflow-y: auto;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.2);
+  padding: 20px;
+}
+
+.sidebar.show {
+  display: block;
+}
+
+.menuButton {
+  display: block;
+  font-size: 1.5rem;
+  padding: 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+}
+
+
+@media (max-width: 768px) {
+  /* ========== GENERAL ========== */
+  body {
+    margin: 10% auto;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /* ========== NAVBAR ========== */
+  .logo {
+    margin-left: 20% !important;
+  }
+
+
+  /* ========== HOMEPAGE ========== */
+  .hero {
+    height: 200px !important;
+  }
+  
+  .heroTitle {
+    font-size: 1.2rem !important;
+    width: 80% !important;
+    margin: 5px auto 20px 0 !important;
+  }
+
+  .heroSubtitle {
+    font-size: 1rem !important;
+    margin: 0 auto 20px 0 !important;
+    width: 70% !important;
+    
+    text-align: left !important;
+  }
+
+  .heroButtons {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .swiper-slide {
+    width: 100% !important;
+  }
+
+  /* recent viewed layout */
+  .recipeRow {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    justify-items: center !important;
+  }
+
+
+  /* ========== PROFILE PAGE ========== */
+  .profile-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  .leftColumn{
+    width: 100% !important;
+    border-right: none !important;
+    border-bottom: 2px solid #e0e0e0;
+    padding: 0 !important;
+  }
+
+  .rightColumn {
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .recipeList {
+    grid-template-columns: 1fr !important;
+  }
+
+
+  /* ========== FORM PAGES (Create/Edit) ========== */
+  .container {
+    width: 95% !important;
+    padding: 10px !important;
+  }
+
+  .ingredientRow {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  
+  .ingredientInputSection {
+    display: flex !important;
+    flex: 1 !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+  }
+  
+  .ingredientInput,
+  .measureInput {
+    flex: 1 !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+  
+  .removeButton {
+    flex-shrink: 0 !important;
+    padding: 6px 12px !important;
+    white-space: nowrap !important;
+  }
+  
+
+/* ========== DRINK DETAIL ========== */
+  .detail-container {
+    max-width: 100% !important;
+  }
+
+  .contentWrapper {
+    flex-direction: column !important;
+  }
+
+  .imageWrapper {
+    height: 350px !important;
+  }
+
+  .tabHeader {
+    margin-left: 10px !important;
+    margin-right: 10px !important;
+  }
+
+  .comment {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+
+  /* ========== DRINKS ========== */
+  .sidebar {
+    width: 50% !important;
+  }
+
+  .clearButton {
+    font-size: 0.9rem !important;
+    padding: 5px 10px !important;
+    margin-top: 10% !important;
+  }
+
+}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from "axios";
 import defaultProfileImg from "../images/defaultProfileImg.png";
+import '../css/responsive.css';
 
 function Profile() {
   // hooks to store drink recipes and search filters
@@ -132,9 +133,9 @@ function Profile() {
 
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} className='profile-container'>
       {/* user detail */}
-      <div style={styles.leftColumn}>
+      <div style={styles.leftColumn} className='leftColumn'>
         <img 
           src={user.profileImage
             ? user.profileImage.startsWith("http")
@@ -177,7 +178,7 @@ function Profile() {
       </div>
 
       {/* saved recipes */}
-      <div style={styles.rightColumn}>
+      <div style={styles.rightColumn} className='rightColumn'>
       <h2 style={styles.recipeTitle}>📖 My Recipes</h2>
         {/* tab navigation */}
         <div style={styles.tabHeader}>
@@ -193,7 +194,7 @@ function Profile() {
           {activeTab === "saved" ? (
             <div>
               {savedRecipes.length > 0 ? (
-              <div style={styles.recipeList}>
+              <div style={styles.recipeList} className='recipeRow'>
                 {savedRecipes.map((recipe) => (
                   <div key={recipe._id} style={styles.recipeCard} onClick={() => navigate(`/drink/${recipe._id}`)}>
                     <img src={recipe.imageUrl 
@@ -217,7 +218,7 @@ function Profile() {
               </button>
 
               {createdRecipes.length > 0 ? (
-                <div style={styles.recipeList}>
+                <div style={styles.recipeList}  className='recipeRow'>
                   {createdRecipes.map((recipe) => (
                     <div key={recipe._id} style={styles.recipeCard} onClick={() => navigate(`/drink/${recipe._id}`)}>
                       <img src={recipe.imageUrl ? `http://localhost:5173${recipe.imageUrl}` :  "https://via.placeholder.com/150"} alt={recipe.name} style={styles.image} />
@@ -245,7 +246,7 @@ const styles = {
     gap: "20px", 
     maxWidth: "90%", 
     margin: "auto",
-    height: "80vh",
+    maxHeight: "100%",
   },
   leftColumn: {
     flex: 1,

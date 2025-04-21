@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from "axios";
+import '../css/responsive.css';
 
 function CreateRecipe() {
     // hooks to store drink recipes and search filters
@@ -103,8 +104,8 @@ function CreateRecipe() {
 
 
     return (
-        <div style={styles.container}>
-            <h3>Add New Recipe</h3>
+        <div style={styles.container} className='container'>
+            <h3 style={styles.title}>Add New Recipe</h3>
             
             {/* recipe name */}
             <div style={styles.formGroup}>
@@ -123,25 +124,30 @@ function CreateRecipe() {
             <div style={styles.formGroup}>
                 <label style={styles.label}>Ingredients</label>
                 {newRecipe.ingredients.map((ing, index) => (
-                    <div key={index} style={styles.ingredientRow}>
-                        <input
-                            type="text"
-                            placeholder="Ingredient"
-                            value={ing.ingredient}
-                            onChange={(e) => handleIngredientChange(index, "ingredient", e.target.value)}
-                            style={styles.ingredientInput}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Measure"
-                            value={ing.measure}
-                            onChange={(e) => handleIngredientChange(index, "measure", e.target.value)}
-                            style={styles.measureInput}
-                        />
+                    <div key={index} style={styles.ingredientRow} className='ingredientRow'>
+                        <div style={styles.ingredientInputSection} className='ingredientInputSection'>
+                            <input
+                                type="text"
+                                placeholder="Ingredient"
+                                value={ing.ingredient}
+                                onChange={(e) => handleIngredientChange(index, "ingredient", e.target.value)}
+                                style={styles.ingredientInput}
+                                className='ingredientInput'
+                            />
+                            <input
+                                type="text"
+                                placeholder="Measure"
+                                value={ing.measure}
+                                onChange={(e) => handleIngredientChange(index, "measure", e.target.value)}
+                                style={styles.measureInput}
+                                className='measureInput'
+                            />
+                        </div>
                         <button 
                             type="button" 
                             onClick={() => removeIngredientField(index)}
                             style={styles.removeButton}
+                            className='removeButton'
                         >
                             X
                         </button>
@@ -244,6 +250,9 @@ const styles = {
         marginTop: "20px",
         boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
     },
+    title : {
+        textAlign: "center",
+    },
     formGroup: {
         marginBottom: "15px",
     },
@@ -275,6 +284,11 @@ const styles = {
     ingredientRow: {
         display: "flex",
         marginBottom: "10px",
+        alignItems: "center",
+    },
+    ingredientInputSection: {
+        width: "100%",
+        display: "flex",
         alignItems: "center",
     },
     ingredientInput: {

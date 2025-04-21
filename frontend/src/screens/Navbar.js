@@ -15,7 +15,7 @@ function Navbar() {
       <div style={styles.container}>
         <nav style={styles.navbar}>
             <div style={styles.topBar}>
-                <Link to="/" style={styles.logo}>MagicalMix</Link>
+                <Link to="/" style={styles.logo} className="logo">MagicalMix</Link>
                 <div style={styles.navbarLink}>
                     {user ? (
                         <>

@@ -6,7 +6,8 @@ import { Navigation, Pagination, Autoplay, EffectCoverflow } from 'swiper/module
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-coverflow';
-import './Homepage.css';
+import '../css/Homepage.css';
+import '../css/responsive.css';
 
 
 function Homepage() {
@@ -36,13 +37,13 @@ function Homepage() {
 
     return (
         <div style={styles.container}>
-            <section style={styles.hero}>
-                <h1 style={styles.heroTitle}>Sip Into the World of Mixology Magic</h1>
-                <p style={styles.heroSubtitle}>
+            <section style={styles.hero} className="hero">
+                <h1 style={styles.heroTitle} className="heroTitle">Sip Into the World of Mixology Magic</h1>
+                <p style={styles.heroSubtitle} className="heroSubtitle">
                     Discover a vibrant collection of drink recipes tailored to your taste buds.
                 </p>
-                <div style={styles.heroButtons}>
-                    <button style={styles.exploreButton} onClick={() => navigate("/drinks")}>Explore Drinks</button>
+                <div style={styles.heroButtons} className="heroButtons">
+                    <button style={styles.exploreButton} className="exploreButton" onClick={() => navigate("/drinks")}>Explore Drinks</button>
                 </div>
             </section>
 
@@ -142,7 +143,7 @@ function Homepage() {
             {/* Recently Viewed Section */}
             <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>Recent Viewed</h3>
-                <div style={styles.recipeRow}>
+                <div style={styles.recipeRow} className="recipeRow">
                     {recentViewed.map(recipe => (
                         <div 
                             key={recipe._id} 

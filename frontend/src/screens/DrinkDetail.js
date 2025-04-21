@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import '../css/responsive.css';
 
 function RecipeInstructions({ instructions }) {
     // split instructions into numbered steps
@@ -187,10 +188,10 @@ function DrinkDetails() {
       };
 
     return (
-        <div style={styles.container}>
-            <div style={styles.contentWrapper}>
-                <div style={styles.leftColumn}>
-                    <div style={styles.imageWrapper}>
+        <div style={styles.container} className="detail-container">
+            <div style={styles.contentWrapper} className="contentWrapper">
+                <div style={styles.leftColumn} className="leftColumn">
+                    <div style={styles.imageWrapper} className="imageWrapper">
                         <img src={drink.imageUrl 
                             ? drink.imageUrl.startsWith("http") 
                             ? drink.imageUrl  
@@ -232,7 +233,7 @@ function DrinkDetails() {
 
 
                     <div style={styles.ratingRow}>
-                        <p><strong>Average Rating:</strong> ⭐{drink.avgRate.toFixed(1)}</p>
+                        <p><strong>Rating:</strong> ⭐{drink.avgRate.toFixed(1)}</p>
                         <div style={styles.buttonContainer}>
                             {/* save button */}
                             <button style={styles.saveButton} 
@@ -247,10 +248,11 @@ function DrinkDetails() {
                     </div>
                 </div>
 
-                <div style={styles.rightColumn}>
-                    <div>
+                <div style={styles.rightColumn} className="rightColumn">
                     {/* tabs for ingredients and instructions*/}
-                        <div style={styles.tabHeader}>
+                    <div style={styles.tabSection}>
+                        {/* tab header */}
+                        <div style={styles.tabHeader} className="tabHeader">
                             <button style={activeTab === "ingredients" ? styles.activeTab : styles.tab}
                             onClick={() => setActiveTab("ingredients")}>
                                 Ingredients
@@ -373,7 +375,6 @@ const styles = {
         height: "100%",
         objectFit: "cover",
         borderRadius: "40px",
-        marginTop: "10%",
         boxShadow: "0px 6px 10px rgba(0, 0, 0, 0.1)",
     },
     labels: {
@@ -438,7 +439,9 @@ const styles = {
         borderRadius: "5px",
         fontSize: "1rem",
     },
-
+    tabSection: {
+        paddingBottom: "10%",
+    },
     ingredientList: {
         listStyleType: "square",
         textAlign: "left",
@@ -454,7 +457,6 @@ const styles = {
         marginLeft: "15%",
         marginRight: "15%",
         marginTop: "10%",
-        //maxWidth: "60%",
     },
     tab: {
         padding: "10px 20px",
