@@ -9,7 +9,7 @@ const multer = require("multer");
 const app = express();
 app.use(express.json());
 app.use(cors({
-    origin: ["http://localhost:3000", "https://fyp-drinks.onrender.com"],
+    origin: ["http://localhost:3000", "https://fyp-drinks.onrender.com", "https://magicalmix.vercel.app"],
     credentials: true
 }));
 
