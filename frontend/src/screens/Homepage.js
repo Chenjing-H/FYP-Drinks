@@ -154,7 +154,7 @@ function Homepage() {
                             <img src={recipe.imageUrl 
                                 ? recipe.imageUrl.startsWith("http") 
                                 ? recipe.imageUrl  
-                                : `http://localhost:5173${recipe.imageUrl}`
+                                : `${API_URL}${recipe.imageUrl}`
                                 : "https://via.placeholder.com/150"
                             } alt={recipe.name} style={styles.image} />
                             <p style={styles.recipeName}>{recipe.name}</p>

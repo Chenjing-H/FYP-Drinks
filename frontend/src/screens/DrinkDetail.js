@@ -43,7 +43,7 @@ function DrinkDetails() {
 
     const fetchDrinkDetails = async () => {
         try {
-            const response = await axios.get(`http://${API_URL}/drink-recipes/${id}`);
+            const response = await axios.get(`${API_URL}/drink-recipes/${id}`);
 
             // add to recently viewed
             const stored = JSON.parse(localStorage.getItem("recentViewed")) || [];
