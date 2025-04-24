@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import API_URL from '../config';
 import { useNavigate, Link } from 'react-router-dom';
 
 function Signup() {
@@ -24,7 +25,7 @@ function Signup() {
 
     try {
       // sending signup request to backend API and redirect to login page
-      await axios.post('http://localhost:5173/signup', { name, email, password });
+      await axios.post(`${API_URL}/signup`, { name, email, password });
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.data || err.response?.data?.message || 'Signup failed. Please try again.');

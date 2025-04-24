@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express"); 
 const mongoose = require("mongoose"); 
 const bcrypt = require("bcrypt"); 
@@ -24,8 +26,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // MongoDB connection 
-const MONGO_DRINK_RECIPE_URL = "mongodb+srv://chenjingh:mahe12121126@cluster0.omdib.mongodb.net/DrinkRecipe";
-const MONGO_USER_DETAILS_URL = "mongodb+srv://chenjingh:mahe12121126@cluster0.omdib.mongodb.net/UserDetails";
+const MONGO_DRINK_RECIPE_URL = process.env.MONGO_DRINK_RECIPE_URL;
+const MONGO_USER_DETAILS_URL = process.env.MONGO_USER_DETAILS_URL;
 
 const drinkRecipeDB = mongoose.createConnection(MONGO_DRINK_RECIPE_URL);
 const userDetailsDB = mongoose.createConnection(MONGO_USER_DETAILS_URL);

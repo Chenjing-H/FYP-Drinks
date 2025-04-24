@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from "axios";
+import API_URL from '../config';
 import defaultProfileImg from "../images/defaultProfileImg.png";
 import '../css/responsive.css';
 
@@ -56,7 +57,7 @@ function Profile() {
     // Fetch drink recipes database from the backend
     const fetchSavedRecipes = async () => {
       try {
-          const response = await axios.get(`http://localhost:5173/user/${user._id}/saved-recipes`);
+          const response = await axios.get(`${API_URL}/user/${user._id}/saved-recipes`);
           
           // initialize recipes and filtered recipes to all
           setSavedRecipes(response.data);
@@ -67,7 +68,7 @@ function Profile() {
 
     const fetchCreatedRecipes = async () => {
       try {
-        const response = await axios.get(`http://localhost:5173/user/${user._id}/created-recipe`);
+        const response = await axios.get(`${API_URL}/user/${user._id}/created-recipe`);
         console.log("Created recipes response:", response.data);
         setCreatedRecipes(response.data);
       } catch (error) {
@@ -89,7 +90,7 @@ function Profile() {
     if (!window.confirm("Are you sure you want to delete this recipe?")) return;
 
     try {
-      await axios.delete(`http://localhost:5173/user/${user._id}/delete-recipe/${recipeId}`);
+      await axios.delete(`${API_URL}/user/${user._id}/delete-recipe/${recipeId}`);
       alert("Recipe deleted successfully!");
       setCreatedRecipes((prev) => prev.filter((recipe) => recipe._id !== recipeId));
     } catch (error) {
@@ -117,7 +118,7 @@ function Profile() {
       formData.append("profileImage", updatedUser.profileImage);
     }
     try {
-      const response = await axios.put(`http://localhost:5173/user/${user._id}/edit`, formData, {
+      const response = await axios.put(`${API_URL}/user/${user._id}/edit`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
   
@@ -140,7 +141,7 @@ function Profile() {
           src={user.profileImage
             ? user.profileImage.startsWith("http")
             ? user.profileImage
-            : `http://localhost:5173${user.profileImage}`
+            : `${API_URL}${user.profileImage}`
             : defaultProfileImg
           }
           onError={(e) => e.target.src = defaultProfileImg} 
@@ -200,7 +201,7 @@ function Profile() {
                     <img src={recipe.imageUrl 
                       ? recipe.imageUrl.startsWith("http") 
                       ? recipe.imageUrl  
-                      : `http://localhost:5173${recipe.imageUrl}`
+                      : `${API_URL}${recipe.imageUrl}`
                       : "https://via.placeholder.com/150"
                     } alt={recipe.name} style={styles.image} />
                     <h3 style={styles.recipeName}>{recipe.name}</h3>
@@ -221,7 +222,7 @@ function Profile() {
                 <div style={styles.recipeList}  className='recipeRow'>
                   {createdRecipes.map((recipe) => (
                     <div key={recipe._id} style={styles.recipeCard} onClick={() => navigate(`/drink/${recipe._id}`)}>
-                      <img src={recipe.imageUrl ? `http://localhost:5173${recipe.imageUrl}` :  "https://via.placeholder.com/150"} alt={recipe.name} style={styles.image} />
+                      <img src={recipe.imageUrl ? `${API_URL}${recipe.imageUrl}` :  "https://via.placeholder.com/150"} alt={recipe.name} style={styles.image} />
                       <h3 style={styles.recipeName}>{recipe.name}</h3>
                       <button style={styles.editButton} onClick={(e) => { e.stopPropagation(); handleEditRecipe(recipe._id); }}>Edit</button>
                       <button style={styles.deleteButton} onClick={(e) => {e.stopPropagation(); handleDeleteRecipe(recipe._id) }}>Delete</button>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_URL from "../config";
 import '../css/responsive.css';
 
 function RecipeInstructions({ instructions }) {
@@ -42,7 +43,7 @@ function DrinkDetails() {
 
     const fetchDrinkDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:5173/drink-recipes/${id}`);
+            const response = await axios.get(`http://${API_URL}/drink-recipes/${id}`);
 
             // add to recently viewed
             const stored = JSON.parse(localStorage.getItem("recentViewed")) || [];
@@ -74,7 +75,7 @@ function DrinkDetails() {
             const user = JSON.parse(localStorage.getItem("user"));
             if (!user || !user._id) return;
     
-            const response = await axios.get(`http://localhost:5173/user/${user._id}/saved-recipes`);
+            const response = await axios.get(`${API_URL}/user/${user._id}/saved-recipes`);
             const savedRecipeIds = response.data.map(recipe => recipe._id);
             
             // convert the array into an object for quick lookup
@@ -105,9 +106,9 @@ function DrinkDetails() {
           }
     
           if (savedRecipes[id]) {
-            await axios.delete(`http://localhost:5173/user/${user._id}/save-recipe/${id}`);
+            await axios.delete(`${API_URL}/user/${user._id}/save-recipe/${id}`);
           } else {
-            await axios.post(`http://localhost:5173/user/${user._id}/save-recipe/${id}`);
+            await axios.post(`${API_URL}/user/${user._id}/save-recipe/${id}`);
           }
         //   setSavedRecipes(prev => ({ ...prev, [id]: !prev[id] }));
         fetchSavedRecipes();
@@ -119,7 +120,7 @@ function DrinkDetails() {
     const handleRateDrink = async (rating) => {
         try {
             setIsRating(true);
-            const response = await axios.put(`http://localhost:5173/drink-recipes/${id}/rate`, { rating });
+            const response = await axios.put(`${API_URL}/drink-recipes/${id}/rate`, { rating });
     
             setDrink((prevDrink) => ({
                 ...prevDrink,
@@ -140,7 +141,7 @@ function DrinkDetails() {
         if (!newComment.trim()) return;
     
         try {
-          const response = await axios.post(`http://localhost:5173/drink-recipes/${id}/comments`, {
+          const response = await axios.post(`${API_URL}/drink-recipes/${id}/comments`, {
             user: user.name,
             text: newComment,
           });
@@ -155,7 +156,7 @@ function DrinkDetails() {
     // delete a comment
     const handleDeleteComment = async (commentId) => {
         try {
-            const response = await axios.delete(`http://localhost:5173/drink-recipes/${id}/comments/${commentId}`);
+            const response = await axios.delete(`${API_URL}/drink-recipes/${id}/comments/${commentId}`);
     
             // Update comments in state after deletion
             setDrink((prevDrink) => ({
@@ -177,7 +178,7 @@ function DrinkDetails() {
         }
 
         try {
-          const response = await axios.put(`http://localhost:5173/drink-recipes/${id}/comments/${commentId}/like`, {userEmail});
+          const response = await axios.put(`${API_URL}/drink-recipes/${id}/comments/${commentId}/like`, {userEmail});
           const updatedComments = response.data.map(comment => ({
             ...comment, liked: comment.likedBy?.includes(userEmail) || false, 
           }));
@@ -195,7 +196,7 @@ function DrinkDetails() {
                         <img src={drink.imageUrl 
                             ? drink.imageUrl.startsWith("http") 
                             ? drink.imageUrl  
-                            : `http://localhost:5173${drink.imageUrl}`
+                            : `${API_URL}${drink.imageUrl}`
                             : "https://via.placeholder.com/150"
                         } alt={drink.name} style={styles.image} />
                         <div style={styles.titleOverlay}>

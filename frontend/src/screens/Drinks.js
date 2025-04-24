@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
+import API_URL from "../config";
 import '../css/responsive.css';
 
 function DrinkRecipes() {
@@ -63,7 +64,7 @@ function DrinkRecipes() {
       try {
         await fetchSavedRecipes();
 
-        const response = await axios.get("http://localhost:5173/drink-recipes");
+        const response = await axios.get(`${API_URL}/drink-recipes`);
         const allRecipes = response.data;
         // sort by avgRates
         const sortedRecipes = allRecipes.sort((a,b)=>b.avgRate-a.avgRate);
@@ -94,7 +95,7 @@ const fetchSavedRecipes = async () => {
         const user = JSON.parse(localStorage.getItem("user"));
         if (!user || !user._id) return;
 
-        const response = await axios.get(`http://localhost:5173/user/${user._id}/saved-recipes`);
+        const response = await axios.get(`${API_URL}/user/${user._id}/saved-recipes`);
         const savedRecipeIds = response.data.map(recipe => recipe._id);
         
         // convert the array into an object for quick lookup
@@ -192,9 +193,9 @@ const fetchSavedRecipes = async () => {
       }
 
       if (savedRecipes[recipeId]) {
-        await axios.delete(`http://localhost:5173/user/${user._id}/save-recipe/${recipeId}`);
+        await axios.delete(`${API_URL}/user/${user._id}/save-recipe/${recipeId}`);
       } else {
-        await axios.post(`http://localhost:5173/user/${user._id}/save-recipe/${recipeId}`);
+        await axios.post(`${API_URL}/user/${user._id}/save-recipe/${recipeId}`);
       }
       // setSavedRecipes(prev => ({ ...prev, [recipeId]: !prev[recipeId] }));
       fetchSavedRecipes();
@@ -304,7 +305,7 @@ const fetchSavedRecipes = async () => {
                   <img src={recipe.imageUrl 
                     ? recipe.imageUrl.startsWith("http") 
                     ? recipe.imageUrl  
-                    : `http://localhost:5173${recipe.imageUrl}`
+                    : `${API_URL}${recipe.imageUrl}`
                     : "https://via.placeholder.com/150"
                   } alt={recipe.name} style={styles.image} />
                   <h3 style={styles.recipeName}>{recipe.name}</h3>

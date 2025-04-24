@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_URL from "../config";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectCoverflow } from 'swiper/modules';
 import 'swiper/css';
@@ -19,7 +20,7 @@ function Homepage() {
     useEffect(() => {
         const fetchTopDrinks = async () => {
             try {
-                const response = await axios.get("http://localhost:5173/drink-recipes");
+                const response = await axios.get(`${API_URL}/drink-recipes`);
                 const sortedByRate = response.data.sort((a, b) => b.avgRate - a.avgRate).slice(0, 10);
                 const sortedByDate = [...response.data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
                 setTopDrinks(sortedByRate);
@@ -85,7 +86,7 @@ function Homepage() {
                                 recipe.imageUrl
                                 ? recipe.imageUrl.startsWith("http")
                                     ? recipe.imageUrl
-                                    : `http://localhost:5173${recipe.imageUrl}`
+                                    : `${API_URL}${recipe.imageUrl}`
                                 : "https://via.placeholder.com/150"
                             }
                             alt={recipe.name}
@@ -125,7 +126,7 @@ function Homepage() {
                                     recipe.imageUrl
                                         ? recipe.imageUrl.startsWith("http")
                                         ? recipe.imageUrl
-                                        : `http://localhost:5173${recipe.imageUrl}`
+                                        : `${API_URL}${recipe.imageUrl}`
                                         : "https://via.placeholder.com/300"
                                     }
                                     alt={recipe.name}

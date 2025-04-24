@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import API_URL from '../config';
 import { useNavigate, Link } from 'react-router-dom';
 
 
@@ -23,7 +24,7 @@ function Login() {
     }
     try {
       // sending login request to backend API
-      const response = await axios.post('http://localhost:5173/login', { email:email, password });
+      const response = await axios.post(`${API_URL}/login`, { email:email, password });
       console.log("Login Response:", response.data,response.data.user);
       
       // if user data received, store in local storage 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import API_URL from "../config";
 import '../css/responsive.css';
 
 function EditRecipe() {
@@ -21,7 +22,7 @@ function EditRecipe() {
     useEffect(() => {
         const fetchRecipe = async () => {
             try {
-                const response = await axios.get(`http://localhost:5173/drink-recipes/${recipeId}`);
+                const response = await axios.get(`${API_URL}/drink-recipes/${recipeId}`);
                 setRecipe(response.data);
                 setUpdatedRecipe({
                     name: response.data.name,
@@ -106,7 +107,7 @@ function EditRecipe() {
                 formData.append("image", updatedRecipe.imageFile);
             }
 
-            await axios.put(`http://localhost:5173/user/${user._id}/edit-recipe/${recipeId}`, formData, {
+            await axios.put(`${API_URL}/user/${user._id}/edit-recipe/${recipeId}`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 

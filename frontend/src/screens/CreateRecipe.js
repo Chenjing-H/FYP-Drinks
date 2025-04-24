@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from "axios";
+import API_URL from '../config';
 import '../css/responsive.css';
 
 function CreateRecipe() {
@@ -86,7 +87,7 @@ function CreateRecipe() {
 
             console.log("Submitting recipe with image:", newRecipe.imageFile);
         
-            await axios.post(`http://localhost:5173/user/${user._id}/add-recipe`, formData, {
+            await axios.post(`${API_URL}/user/${user._id}/add-recipe`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
             
