@@ -15,9 +15,14 @@ function Homepage() {
     const navigate = useNavigate();
     const [topDrinks, setTopDrinks] = useState([]);
     const [recentViewed, setRecentViewed] = useState([]);
-    const [latestDrinks, setLatestDrinks] = useState([]);      
+    const [latestDrinks, setLatestDrinks] = useState([]);  
+    const [recommendedDrinks, setRecommendedDrinks] = useState([]);
+    const [user, setUser] = useState(null); 
       
     useEffect(() => {
+        const user = JSON.parse(localStorage.getItem("user"));
+        setUser(user);
+
         const fetchTopDrinks = async () => {
             try {
                 const response = await axios.get(`${API_URL}/drink-recipes`);
@@ -35,6 +40,60 @@ function Homepage() {
 
         fetchTopDrinks();
     }, []);
+
+    useEffect(() => {
+        const fetchRecommendations = async () => {
+            // if no user then return without fetch recommendations
+            if (!user) return; 
+            try {
+                // fetch saved recipes
+                const savedRes = await axios.get(`${API_URL}/user/${user._id}/saved-recipes`);
+                const savedDrinks = savedRes.data;
+
+                const savedIngredients = new Set();
+                // save user saved drinks id
+                const savedIds = new Set();
+                
+                savedDrinks.forEach(drink => {
+                    savedIds.add(drink._id);
+                    drink.ingredients.forEach(ing => {
+                        savedIngredients.add(ing.ingredient.toLowerCase());
+                    });
+                });
+        
+                // get all drinks
+                const allRes = await axios.get(`${API_URL}/drink-recipes`);
+                
+                // calculate most matching recipes
+                const scores = allRes.data
+                    // filter out saved recipes
+                    .filter(drink => !savedIds.has(drink._id))
+                    .map(drink => {
+                        let matchCount = 0;
+                        drink.ingredients.forEach(ing => {
+                            if (savedIngredients.has(ing.ingredient.toLowerCase())) {
+                            matchCount++;
+                            }
+                        });
+                    return { drink, score: matchCount };
+                });
+        
+                // take the top four matching recipes
+                const topMatches = scores
+                    .sort((a, b) => b.score - a.score)
+                    .filter(item => item.score > 0)
+                    .slice(0, 4)
+                    .map(item => item.drink);
+        
+                setRecommendedDrinks(topMatches);
+            } catch (err) {
+                console.error("Error fetching recommended drinks:", err);
+            }
+            };
+        
+            fetchRecommendations();
+        }, [user]);
+      
 
     return (
         <div style={styles.container}>
@@ -140,6 +199,35 @@ function Homepage() {
                     ))}
                 </Swiper>
             </div>
+
+            {/* Recommendation Section */}
+            {user && recommendedDrinks.length > 0 && (
+                <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>Recommended For You</h3>
+                    <div style={styles.recipeRow} className="recipeRow">
+                        {recommendedDrinks.map(recipe => (
+                            <div 
+                                key={recipe._id} 
+                                style={styles.recipeCard} 
+                                onClick={() => navigate(`/drink/${recipe._id}`)}
+                            >
+                                <img
+                                    src={recipe.imageUrl 
+                                    ? recipe.imageUrl.startsWith("http")
+                                        ? recipe.imageUrl  
+                                        : `${API_URL}${recipe.imageUrl}`
+                                        : "https://via.placeholder.com/150"
+                                    }
+                                    alt={recipe.name}
+                                    style={styles.image}
+                                />
+                                <p style={styles.recipeName}>{recipe.name}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
 
             {/* Recently Viewed Section */}
             <div style={styles.section}>
