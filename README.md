@@ -7,7 +7,8 @@
 NodeJS server with MongoDB database
 
 1. cd backend
-2. nodemon app.js
+2. npm install
+3. nodemon app.js
 
 ### Frontend
 
