@@ -175,6 +175,26 @@ app.put("/user/:userId/edit", upload.single("profileImage"), async (req, res) =>
     }
   });
 
+// Delete user account
+app.delete("/user/:userId/delete", async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // delete user
+        const user = await User.findByIdAndDelete(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found"});
+        }
+
+        // delete recipes created by the user
+        await AllDrinkRecipes.deleteMany({ _id: { $in: user.createdRecipes } });
+        res.json({ message: "User account delete successfully." })
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        res.status(500).json({ message: "Failed to delete user", error });
+    }
+});
+
 // Display Drink Recipes
 app.get("/drink-recipes", async (req, res) => {
     try {

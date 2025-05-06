@@ -82,10 +82,13 @@ function Profile() {
 
   if (!user) return null;
 
+  // handle editing created recipes
   const handleEditRecipe = async (recipeId) => {
+    // redirect to the form page
     navigate(`/edit-recipe/${recipeId}`);
   };
 
+  // handle delete created recipes
   const handleDeleteRecipe = async (recipeId) => {
     if (!window.confirm("Are you sure you want to delete this recipe?")) return;
 
@@ -132,6 +135,23 @@ function Profile() {
     }
   };
 
+  // handle delete user account
+  const handleDeleteAccount = async () => {
+    // confirm deletion
+    const confirmDelete = window.confirm("Are you sure to delete your account? This process cannot be undone.");
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${API_URL}/user/${user._id}/delete`);
+      alert("Account deleted successfully.");
+      localStorage.removeItem("user");
+      // redirect to signup page
+      navigate('/signup');
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      alert("Failed to delete account.")
+    }
+  }
 
   return (
     <div style={styles.container} className='profile-container'>
@@ -147,8 +167,11 @@ function Profile() {
           onError={(e) => e.target.src = defaultProfileImg} 
           alt="User Profile" style={styles.profileImage} 
         />
-        <button onClick={handleEditToggle} style={styles.editProfileButton}>Edit Profile</button>
-            
+        <div style={styles.profileButtons}>
+          <button onClick={handleEditToggle} style={styles.editProfileButton}>Edit Profile</button>
+          <button onClick={handleDeleteAccount} style={styles.deleteAccountButton}>Delete Account</button>
+        </div>  
+
         {editing ? (
           <div>
             <div style={styles.PersonalInputGroup}>
@@ -243,7 +266,7 @@ function Profile() {
 const styles = {
   container: {
     display: "grid", 
-    gridTemplateColumns: "30% 70%", 
+    gridTemplateColumns: "40% 60%", 
     gap: "20px", 
     maxWidth: "90%", 
     margin: "auto",
@@ -274,8 +297,22 @@ const styles = {
     marginBottom: "1rem",
     textAlign: "center",
   },
+  profileButtons: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "10px",
+  },
   editProfileButton: {
     backgroundColor: "#62c465",
+    color: "white",
+    border: "none",
+    padding: "10px",
+    margin: "5px",
+    cursor: "pointer",
+    borderRadius: "50px",
+  },
+  deleteAccountButton: {
+    backgroundColor: "#FF0000",
     color: "white",
     border: "none",
     padding: "10px",
